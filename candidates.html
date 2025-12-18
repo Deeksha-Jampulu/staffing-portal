@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Candidates</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <a href="index.html">Dashboard</a>
+    <a href="candidates.html">Candidates</a>
+    <a href="recruiters.html">Recruiters</a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h1>Candidates</h1>
+      <p class="small">Add candidate + store resume as Google Drive link.</p>
+
+      <!-- Add Candidate Form -->
+      <div class="card">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <input id="full_name" placeholder="Full name" style="flex:1; min-width:220px;" />
+          <input id="email" placeholder="Email" style="flex:1; min-width:220px;" />
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+          <input id="phone" placeholder="Phone" style="flex:1; min-width:220px;" />
+          <input id="location" placeholder="Location" style="flex:1; min-width:220px;" />
+        </div>
+
+        <div style="margin-top:10px;">
+          <input id="resume_link" placeholder="Resume link (Google Drive link)" style="width:100%;" />
+        </div>
+
+        <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+          <button id="addBtn">Add Candidate</button>
+          <span id="msg" class="small"></span>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-top:14px;">
+        <input id="search" placeholder="Search by name/email..." style="width:100%;" />
+      </div>
+
+      <!-- Candidates Table -->
+      <div class="card" style="margin-top:14px; overflow:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Name</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Email</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Phone</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Location</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Resume</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Created</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let all = [];
+
+    function render() {
+      const q = (document.getElementById("search").value || "").toLowerCase();
+
+      const filtered = all.filter(c =>
+        String(c.full_name || "").toLowerCase().includes(q) ||
+        String(c.email || "").toLowerCase().includes(q)
+      );
+
+      document.getElementById("rows").innerHTML = filtered.map(c => {
+        const resumeCell = c.resume_link
+          ? `<a href="${esc(c.resume_link)}" target="_blank">View</a>`
+          : `<span class="small">No link</span>`;
+
+        return `
+          <tr>
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${esc(c.full_name)}</td>
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${esc(c.email)}</td>
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${esc(c.phone)}</td>
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${esc(c.location)}</td>
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;">${resumeCell}</td>
+            <td style="padding:10px; border-bottom:1px solid #f0f0f0;" class="small">${esc(c.created_at)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function load() {
+      const r = await jsonp("candidates");
+      if (!r || r.ok === false) {
+        document.getElementById("msg").textContent = "Error loading candidates";
+        all = [];
+      } else {
+        all = r.data || [];
+      }
+      render();
+    }
+
+    function clearForm() {
+      document.getElementById("full_name").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("phone").value = "";
+      document.getElementById("location").value = "";
+      document.getElementById("resume_link").value = "";
+    }
+
+    document.getElementById("search").addEventListener("input", render);
+
+    document.getElementById("addBtn").addEventListener("click", async () => {
+      const full_name = document.getElementById("full_name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const location = document.getElementById("location").value.trim();
+      const resume_link = document.getElementById("resume_link").value.trim();
+
+      if (!full_name) {
+        document.getElementById("msg").textContent = "Full name is required";
+        return;
+      }
+
+      document.getElementById("msg").textContent = "Saving...";
+
+      const r = await jsonp("add_candidate", {
+        full_name, email, phone, location, resume_link
+      });
+
+      if (r && r.ok) {
+        document.getElementById("msg").textContent = "Added ✅";
+        clearForm();
+        await load();
+      } else {
+        document.getElementById("msg").textContent = "Error: " + (r && r.error ? r.error : "Unknown");
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>
