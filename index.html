@@ -2,46 +2,49 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Staffing Portal - Dashboard</title>
+
+  <!-- IMPORTANT: match this to your actual css filename -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <nav>
-    <a href="index.html">Dashboard</a>
-    <a href="candidates.html">Candidates</a>
-    <a href="recruiters.html">Recruiters</a>
-  </nav>
+  <div class="topbar">
+    <div class="brand">Staffing Portal</div>
+    <div class="nav">
+      <a class="active" href="index.html">Dashboard</a>
+      <a href="candidates.html">Candidates</a>
+      <a href="recruiters.html">Recruiters</a>
+    </div>
+  </div>
 
   <div class="container">
-   <div class="card">
-  <h1>Dashboard</h1>
-  <p>Total Candidates: <b id="candCount">-</b></p>
-  <p>Total Submissions: <b id="subCount">-</b></p>
-  <p class="small" id="err"></p>
-</div>
+    <div class="card">
+      <h1>Dashboard</h1>
+      <p>Total Candidates: <b id="candCount">-</b></p>
+      <p>Total Submissions: <b id="subCount">-</b></p>
+      <p class="small" id="err"></p>
+    </div>
+  </div>
 
-<script src="app.js"></script>
-<script>
-  (async () => {
-    const errEl = document.getElementById("err");
-    try {
-      const r = await apiGet("dashboard");
-      if (!r || r.ok === false) {
-        errEl.textContent = "Error: " + (r?.error || "Unknown");
-        return;
+  <script src="app.js"></script>
+  <script>
+    (async () => {
+      const errEl = document.getElementById("err");
+      try {
+        const r = await apiGet("dashboard");  // ✅ IMPORTANT
+        if (!r || r.ok === false) {
+          errEl.textContent = "Error: " + (r?.error || "Unknown");
+          return;
+        }
+        document.getElementById("candCount").textContent = r.total_candidates ?? 0;
+        document.getElementById("subCount").textContent = r.total_submissions ?? 0;
+        errEl.textContent = "";
+      } catch (e) {
+        errEl.textContent = "Error: " + e.message;
+        console.error(e);
       }
-      document.getElementById("candCount").textContent = r.total_candidates ?? 0;
-      document.getElementById("subCount").textContent = r.total_submissions ?? 0;
-      errEl.textContent = "";
-    } catch (e) {
-      errEl.textContent = "Error: " + e.message;
-      console.error(e);
-    }
-  })();
-</script>
-
-
-
-
-
-
+    })();
+  </script>
+</body>
+</html>
