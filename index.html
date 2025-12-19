@@ -27,24 +27,31 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
-  <script>
-    (async () => {
-      const errEl = document.getElementById("err");
-      try {
-        const r = await apiGet("dashboard");  // ✅ IMPORTANT
-        if (!r || r.ok === false) {
-          errEl.textContent = "Error: " + (r?.error || "Unknown");
-          return;
-        }
-        document.getElementById("candCount").textContent = r.total_candidates ?? 0;
-        document.getElementById("subCount").textContent = r.total_submissions ?? 0;
-        errEl.textContent = "";
-      } catch (e) {
-        errEl.textContent = "Error: " + e.message;
-        console.error(e);
+<script src="app.js"></script>
+
+<script>
+  async function loadDashboard() {
+    const err = document.getElementById("err");
+    try {
+      const r = await apiGet("dashboard");
+
+      if (!r || r.ok === false) {
+        err.textContent = "Error: API failed";
+        return;
       }
-    })();
-  </script>
-</body>
-</html>
+
+      document.getElementById("candCount").textContent =
+        r.total_candidates;
+      document.getElementById("subCount").textContent =
+        r.total_submissions;
+      err.textContent = "";
+    } catch (e) {
+      err.textContent = "Error: API failed to load";
+      console.error(e);
+    }
+  }
+
+  loadDashboard();
+</script>
+
+
