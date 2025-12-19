@@ -23,17 +23,22 @@
 <script src="app.js"></script>
 <script>
   (async () => {
+    const errEl = document.getElementById("err");
     try {
-      const r = await apiGet("dashboard");
-      if (r.ok === false) {
-        document.getElementById("err").textContent = "Error: " + r.error;
+      const r = await jsonp("dashboard");
+      if (!r || r.ok === false) {
+        errEl.textContent = "Error: " + (r?.error || "Unknown");
         return;
       }
       document.getElementById("candCount").textContent = r.total_candidates ?? 0;
       document.getElementById("subCount").textContent = r.total_submissions ?? 0;
+      errEl.textContent = "";
     } catch (e) {
-      document.getElementById("err").textContent = "Error: " + e;
+      errEl.textContent = "Error: " + e.message;
+      console.error(e);
     }
   })();
 </script>
+
+
 
