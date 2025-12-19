@@ -25,7 +25,7 @@
   (async () => {
     const errEl = document.getElementById("err");
     try {
-      const r = await jsonp("dashboard");
+      const r = await apiGet("dashboard");
       if (!r || r.ok === false) {
         errEl.textContent = "Error: " + (r?.error || "Unknown");
         return;
@@ -39,6 +39,7 @@
     }
   })();
 </script>
+
 
 
 
