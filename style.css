@@ -1,60 +1,57 @@
 body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; }
 
-.topbar{
+/* NAV BAR */
+nav{
   background:#111827;
-  color:#fff;
-  padding:10px 16px;
+  padding:12px 16px;
   display:flex;
   align-items:center;
   gap:14px;
+  flex-wrap:wrap; /* prevents weird shifting */
 }
 
+nav a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:700;
+  display:inline-block;
+  padding:6px 8px;
+  border-radius:8px;
+}
+
+nav a.active, nav a b{
+  text-decoration: underline;
+}
+
+/* BRAND */
 .brand{
   display:flex;
   align-items:center;
   gap:10px;
-  font-weight:800;
+  margin-right:16px;
 }
-
 .brand img{
   height:28px;
   width:auto;
   border-radius:6px;
 }
-
-.nav{
-  margin-left:18px;
-  display:flex;
-  gap:18px;
-  flex-wrap:wrap;
-}
-
-.nav a{
+.brand span{
   color:#fff;
-  text-decoration:none;
-  font-weight:700;
-  opacity:.9;
-  padding:6px 8px;
-  border-radius:8px;
+  font-weight:900;
 }
 
-.nav a:hover{ opacity:1; background:rgba(255,255,255,.08); }
-.nav a.active{ background:rgba(255,255,255,.14); opacity:1; }
-
+/* LAYOUT */
 .container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
-.card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.card { background: #fff; padding: 16px; border-radius: 10px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
 h1 { margin: 0 0 12px; font-size: 22px; }
 .small { color: #6b7280; font-size: 12px; }
 
-/* TABLE FIX: stop overlap + keep neat */
-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-th, td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
-th { text-align:left; font-size: 14px; }
+/* TABLE FIX (prevents overlap) */
+table{ width:100%; border-collapse:collapse; }
+th, td{ padding:10px; vertical-align:top; }
+td{ border-bottom:1px solid #f1f5f9; }
 
-td { font-size: 14px; overflow-wrap: anywhere; word-break: break-word; }
-.nowrap { white-space: nowrap; }
-.email { overflow-wrap:anywhere; }
-.phone { white-space: nowrap; }
-.notes { overflow-wrap:anywhere; }
-
-.tablewrap { overflow-x: auto; }
+/* Make email/phone not overlap */
+.nowrap{ white-space:nowrap; }
+.emailcell a{ word-break:break-all; }   /* email will break into next line if needed */
+.notes{ max-width:320px; white-space:normal; word-break:break-word; }
