@@ -5,7 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Staffing Portal - Candidates</title>
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* Makes some columns stay in one line */
+    .nowrap { white-space: nowrap; }
+    /* Phone should not break weirdly */
+    .phone { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    /* Notes can wrap normally */
+    .notes { white-space: normal; max-width: 380px; }
+    table th, table td { vertical-align: top; }
+  </style>
 </head>
+
 <body>
   <nav>
     <a href="index.html">Dashboard</a>
@@ -22,7 +33,7 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input id="name" placeholder="Name *" />
         <input id="email" placeholder="Email" />
-        <input id="phone" placeholder="Phone" />
+        <input id="phone" placeholder="Phone (ex: +1 816-343-4771)" />
         <input id="location" placeholder="Location" />
         <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" style="grid-column:1 / span 2;" />
         <input id="resume_link" placeholder="Resume Link (Google Drive)" style="grid-column:1 / span 2;" />
@@ -69,25 +80,47 @@
     const tbody = document.getElementById("tbody");
     let all = [];
 
-    function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+
+    function formatDate(v){
+      if(!v) return "";
+      const d = new Date(v);
+      if (isNaN(d.getTime())) return String(v);
+      return d.toLocaleDateString();
+    }
 
     function render(list){
       tbody.innerHTML = "";
+
       list.forEach(c => {
-        const resume = c.resume_link ? `<a href="${esc(c.resume_link)}" target="_blank">View</a>` : "-";
-        const email = c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "-";
         const tr = document.createElement("tr");
         tr.style.borderBottom = "1px solid #f1f5f9";
+
+        const resumeCell = c.resume_link
+          ? `<a href="${esc(c.resume_link)}" target="_blank" rel="noopener">View</a>`
+          : "-";
+
+        const emailCell = c.email
+          ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`
+          : "-";
+
         tr.innerHTML = `
-          <td>${esc(c.name)}</td>
-          <td>${esc(c.domain_role)}</td>
-          <td>${esc(c.location)}</td>
-          <td>${email}</td>
-          <td>${esc(c.phone)}</td>
-          <td>${resume}</td>
-          <td>${esc(c.notes)}</td>
-          <td class="small">${esc(c.created_at)}</td>
+          <td>${esc(c.name || "")}</td>
+          <td class="nowrap">${esc(c.domain_role || "")}</td>
+          <td class="nowrap">${esc(c.location || "")}</td>
+          <td class="nowrap">${emailCell}</td>
+          <td class="phone">${esc(c.phone || "")}</td>
+          <td class="nowrap">${resumeCell}</td>
+          <td class="notes">${esc(c.notes || "")}</td>
+          <td class="nowrap">${esc(formatDate(c.created_at))}</td>
         `;
+
         tbody.appendChild(tr);
       });
     }
@@ -134,8 +167,9 @@
         const r = await apiPost("addCandidate", payload);
         if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
 
-        // clear
-        ["name","email","phone","location","domain_role","resume_link","notes"].forEach(id => document.getElementById(id).value = "");
+        ["name","email","phone","location","domain_role","resume_link","notes"]
+          .forEach(id => document.getElementById(id).value = "");
+
         statusEl.textContent = "Saved ✅";
         await load();
         setTimeout(()=>statusEl.textContent="", 1200);
