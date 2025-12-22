@@ -51,5 +51,33 @@ nav {
   gap: 14px;
 }
 nav a b { text-decoration: underline; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+td.nowrap {
+  white-space: nowrap;
+}
+
+td.phone {
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+td.notes {
+  max-width: 350px;
+  line-height: 1.4;
+}
+
+
 
 
