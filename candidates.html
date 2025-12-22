@@ -3,23 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Staffing Portal - Candidates</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Simarn Staffing Portal - Candidates</title>
+  <link rel="stylesheet" href="style.css?v=200" />
 </head>
 <body>
 
-  <div class="topbar">
+  <nav>
     <div class="brand">
-      <img src="logo.png" alt="Logo" />
-      <span>Staffing Portal</span>
+      <img src="logo.png" alt="Simarn Logo" />
+      <span>Simarn Staffing Portal</span>
     </div>
-    <div class="nav">
-      <a href="index.html">Dashboard</a>
-      <a class="active" href="candidates.html">Candidates</a>
-      <a href="rtrs.html">RTRs</a>
-      <a href="recruiters.html">Recruiters</a>
-    </div>
-  </div>
+
+    <a href="index.html">Dashboard</a>
+    <a class="active" href="candidates.html">Candidates</a>
+    <a href="rtrs.html">RTRs</a>
+    <a href="recruiters.html">Recruiters</a>
+  </nav>
 
   <div class="container">
     <div class="card">
@@ -29,7 +28,7 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input id="name" placeholder="Name *" />
         <input id="email" placeholder="Email" />
-        <input id="phone" placeholder="Phone (+1...)" />
+        <input id="phone" placeholder="Phone (ex: +14691234567)" />
         <input id="location" placeholder="Location" />
         <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" style="grid-column:1 / span 2;" />
         <input id="resume_link" placeholder="Resume Link (Google Drive)" style="grid-column:1 / span 2;" />
@@ -40,30 +39,31 @@
         <button id="btnAdd">Add Candidate</button>
         <span class="small" id="status"></span>
       </div>
-      <p class="small" id="err"></p>
     </div>
 
     <div class="card">
       <h2 style="margin:0 0 10px;">Candidate List</h2>
       <input id="search" placeholder="Search by name/email/role..." style="width:100%;margin-bottom:10px;" />
 
-      <div class="tablewrap">
+      <div style="overflow:auto;">
         <table>
           <thead>
             <tr>
-              <th style="width:140px;">Name</th>
-              <th style="width:140px;">Domain/Role</th>
-              <th style="width:110px;">Location</th>
-              <th style="width:170px;">Email</th>
-              <th style="width:130px;">Phone</th>
-              <th style="width:80px;">Resume</th>
-              <th>Notes</th>
-              <th style="width:110px;">Created</th>
+              <th align="left">Name</th>
+              <th align="left">Domain/Role</th>
+              <th align="left">Location</th>
+              <th align="left">Email</th>
+              <th align="left">Phone</th>
+              <th align="left">Resume</th>
+              <th align="left">Notes</th>
+              <th align="left">Created</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
+
+      <p class="small" id="err"></p>
     </div>
   </div>
 
@@ -80,18 +80,19 @@
       tbody.innerHTML = "";
       list.forEach(c => {
         const resume = c.resume_link ? `<a href="${esc(c.resume_link)}" target="_blank">View</a>` : "-";
-        const email = c.email ? `<a class="email" href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "-";
+        const email = c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "-";
+        const created = c.created_at ? new Date(c.created_at).toLocaleDateString() : "";
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${esc(c.name)}</td>
+          <td class="nowrap">${esc(c.name)}</td>
           <td class="nowrap">${esc(c.domain_role)}</td>
           <td class="nowrap">${esc(c.location)}</td>
-          <td>${email}</td>
-          <td class="phone">${esc(c.phone)}</td>
-          <td>${resume}</td>
+          <td class="emailcell">${email}</td>
+          <td class="nowrap">${esc(c.phone)}</td>
+          <td class="nowrap">${resume}</td>
           <td class="notes">${esc(c.notes)}</td>
-          <td class="nowrap">${c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</td>
+          <td class="nowrap small">${esc(created)}</td>
         `;
         tbody.appendChild(tr);
       });
