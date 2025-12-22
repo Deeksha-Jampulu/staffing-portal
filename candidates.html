@@ -3,18 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Candidates</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Simarn Staffing Portal - Candidates</title>
+  <link rel="stylesheet" href="style.css?v=60" />
 </head>
 
 <body>
   <nav>
-   <a href="index.html">Dashboard</a>
-   <a href="candidates.html">Candidates</a>
-   <a href="rtrs.html">RTRs</a>
-   <a href="recruiters.html">Recruiters</a>
-  </nav>
+    <div class="brand">
+      <img src="logo.png" alt="Simarn Logo" />
+      <span>Simarn Staffing Portal</span>
+    </div>
 
+    <a href="index.html">Dashboard</a>
+    <a href="candidates.html"><b>Candidates</b></a>
+    <a href="rtrs.html">RTRs</a>
+    <a href="recruiters.html">Recruiters</a>
+  </nav>
 
   <div class="container">
     <div class="card">
@@ -89,7 +93,7 @@
         });
       } catch (e) {
         console.error(e);
-        msg.textContent = "Error: API failed to load";
+        document.getElementById("msg").textContent = "Error: API failed to load";
       }
     }
 
@@ -105,8 +109,8 @@
         phone: document.getElementById("phone").value.trim(),
         location: document.getElementById("location").value.trim(),
         domain_role: document.getElementById("domain_role").value.trim(),
-        notes: document.getElementById("notes").value.trim(),
-        resume_link: document.getElementById("resume_link").value.trim()
+        resume_link: document.getElementById("resume_link").value.trim(),
+        notes: document.getElementById("notes").value.trim()
       };
 
       if (!payload.name) {
@@ -129,8 +133,8 @@
         document.getElementById("phone").value = "";
         document.getElementById("location").value = "";
         document.getElementById("domain_role").value = "";
-        document.getElementById("notes").value = "";
         document.getElementById("resume_link").value = "";
+        document.getElementById("notes").value = "";
 
         await loadCandidates();
       } catch (e) {
