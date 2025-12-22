@@ -77,6 +77,22 @@ td.notes {
   max-width: 350px;
   line-height: 1.4;
 }
+/* ---------- Tables: make candidates list clean ---------- */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+th { text-align: left; white-space: nowrap; }
+
+.nowrap { white-space: nowrap; }
+.phone { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.notes { max-width: 420px; white-space: normal; word-break: break-word; line-height: 1.3; }
+
+td a { display: inline-block; } /* prevents mail + view sticking weirdly */
+
+/* Mobile safety */
+@media (max-width: 900px) {
+  .notes { max-width: 260px; }
+}
+
 
 
 
