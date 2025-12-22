@@ -29,4 +29,27 @@ h1 { margin: 0 0 12px; font-size: 22px; }
 .nav a.active {
   text-decoration: underline;
 }
+/* Branding header inside nav */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 18px;
+}
+.brand img {
+  height: 28px;
+  width: auto;
+  border-radius: 6px;
+}
+.brand span {
+  color: #fff;
+  font-weight: 800;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+nav a b { text-decoration: underline; }
+
 
