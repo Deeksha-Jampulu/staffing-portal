@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simarn Staffing Portal - Recruiters</title>
+  <link rel="stylesheet" href="style.css?v=70" />
+</head>
+
+<body>
+  <nav>
+    <div class="brand">
+      <img src="logo.png" alt="Simarn Logo" />
+      <span>Simarn Staffing Portal</span>
+    </div>
+
+    <a href="index.html">Dashboard</a>
+    <a href="candidates.html">Candidates</a>
+    <a href="rtrs.html">RTRs</a>
+    <a href="recruiters.html"><b>Recruiters</b></a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h1>Recruiters</h1>
+
+      <h3>Add Recruiter</h3>
+
+      <input id="rec_name" placeholder="Recruiter Name *" />
+      <input id="rec_mobile" placeholder="Mobile Number * (ex: 4691234567)" />
+
+      <button id="addRecBtn">Add Recruiter</button>
+      <p class="small" id="msg"></p>
+    </div>
+
+    <div class="card">
+      <h3>Recruiters List</h3>
+
+      <table border="1" width="100%" cellpadding="8" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Mobile</th>
+          </tr>
+        </thead>
+        <tbody id="recRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    function esc(x){ return String(x ?? ""); }
+
+    async function loadRecruiters() {
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+
+      try {
+        const r = await apiGet("recruiters");
+        if (!r || r.ok === false) {
+          msg.textContent = "Error loading recruiters";
+          return;
+        }
+
+        const tbody = document.getElementById("recRows");
+        tbody.innerHTML = "";
+
+        (r.data || []).forEach(rec => {
+          const mobile = esc(rec.mobile).trim();
+          const mobileLink = mobile ? `<a href="tel:${mobile}">${mobile}</a>` : "";
+
+          tbody.innerHTML += `
+            <tr>
+              <td>${esc(rec.name)}</td>
+              <td>${mobileLink}</td>
+            </tr>
+          `;
+        });
+
+      } catch (e) {
+        console.error(e);
+        document.getElementById("msg").textContent = "Error: API failed to load";
+      }
+    }
+
+    async function addRecruiter() {
+      const msg = document.getElementById("msg");
+      const btn = document.getElementById("addRecBtn");
+
+      const name = document.getElementById("rec_name").value.trim();
+      const mobile = document.getElementById("rec_mobile").value.trim();
+
+      if (!name || !mobile) {
+        msg.textContent = "Name and Mobile are required";
+        return;
+      }
+
+      btn.disabled = true;
+      msg.textContent = "Saving...";
+
+      try {
+        const r = await apiPost("addRecruiter", { name, mobile });
+        if (!r || r.ok === false) {
+          msg.textContent = "Error saving recruiter";
+          btn.disabled = false;
+          return;
+        }
+
+        msg.textContent = "Added ✅";
+        document.getElementById("rec_name").value = "";
+        document.getElementById("rec_mobile").value = "";
+
+        await loadRecruiters();
+
+      } catch (e) {
+        console.error(e);
+        msg.textContent = "Error: API failed to load";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById("addRecBtn").addEventListener("click", addRecruiter);
+
+    loadRecruiters();
+  </script>
+</body>
+</html>
