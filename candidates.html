@@ -6,27 +6,38 @@
   <title>Staffing Portal - Candidates</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <nav>
-    <a href="index.html">Dashboard</a>
-    <a class="active" href="candidates.html">Candidates</a>
-    <a href="rtr.html">RTRs</a>
-    <a href="recruiters.html">Recruiters</a>
-  </nav>
+  <!-- ✅ SAME TOP BAR AS DASHBOARD -->
+  <div class="topbar">
+    <div class="brand">
+      <!-- If your dashboard logo is different, copy that exact <img> line here -->
+      <img src="logo.png" alt="Logo" class="logo" />
+      <span>Simarn Staffing Portal</span>
+    </div>
+
+    <div class="nav">
+      <a href="index.html">Dashboard</a>
+      <a class="active" href="candidates.html">Candidates</a>
+      <a href="rtr.html">RTRs</a>
+      <a href="recruiters.html">Recruiters</a>
+    </div>
+  </div>
 
   <div class="container">
     <div class="card">
       <h1>Candidates</h1>
       <p class="small">Add candidate + store resume as Google Drive link.</p>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-grid">
         <input id="name" placeholder="Name *" />
         <input id="email" placeholder="Email" />
-        <input id="phone" placeholder="Phone (keep +1 ok)" />
+        <input id="phone" placeholder="Phone (+1..., etc)" />
         <input id="location" placeholder="Location" />
-        <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" style="grid-column:1 / span 2;" />
-        <input id="resume_link" placeholder="Resume Link (Google Drive)" style="grid-column:1 / span 2;" />
-        <textarea id="notes" placeholder="Notes about candidate" style="grid-column:1 / span 2;min-height:70px;"></textarea>
+
+        <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" class="span-2" />
+        <input id="resume_link" placeholder="Resume Link (Google Drive)" class="span-2" />
+        <textarea id="notes" placeholder="Notes about candidate" class="span-2 notes-box"></textarea>
       </div>
 
       <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
@@ -40,8 +51,8 @@
 
       <input id="search" placeholder="Search by name/email/role..." style="width:100%;margin-bottom:10px;" />
 
-      <div style="overflow:auto;">
-        <table id="tbl">
+      <div class="table-wrap">
+        <table id="tbl" class="data-table">
           <thead>
             <tr>
               <th>Name</th>
@@ -77,36 +88,33 @@
     }
 
     function fmtDate(d){
-      try {
-        if (!d) return "";
-        return new Date(d).toLocaleDateString();
-      } catch {
-        return "";
-      }
+      if (!d) return "";
+      const dt = new Date(d);
+      if (isNaN(dt.getTime())) return esc(d);
+      return dt.toLocaleDateString();
     }
 
     function render(list){
       tbody.innerHTML = "";
       list.forEach(c => {
-        const tr = document.createElement("tr");
-
-        const emailHtml = c.email
-          ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`
-          : "-";
-
-        const resumeHtml = c.resume_link
+        const resume = c.resume_link
           ? `<a href="${esc(c.resume_link)}" target="_blank" rel="noopener">View</a>`
           : "-";
 
+        const email = c.email
+          ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`
+          : "-";
+
+        const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${esc(c.name)}</td>
-          <td class="nowrap">${esc(c.domain_role)}</td>
-          <td class="nowrap">${esc(c.location)}</td>
-          <td class="nowrap">${emailHtml}</td>
-          <td class="phone">${esc(c.phone)}</td>
-          <td class="nowrap">${resumeHtml}</td>
-          <td class="notes">${esc(c.notes || "")}</td>
-          <td class="nowrap">${fmtDate(c.created_at)}</td>
+          <td class="col-name">${esc(c.name)}</td>
+          <td class="col-role">${esc(c.domain_role || "")}</td>
+          <td class="col-loc">${esc(c.location || "")}</td>
+          <td class="col-email">${email}</td>
+          <td class="col-phone">${esc(c.phone || "")}</td>
+          <td class="col-resume">${resume}</td>
+          <td class="col-notes">${esc(c.notes || "")}</td>
+          <td class="col-created">${fmtDate(c.created_at)}</td>
         `;
         tbody.appendChild(tr);
       });
