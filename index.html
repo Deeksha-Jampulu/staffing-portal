@@ -3,105 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Simarn Staffing Portal</title>
-  <link rel="stylesheet" href="style.css?v=999" />
+  <title>Simarn Staffing Portal - Dashboard</title>
+
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <nav>
+
+  <!-- TOP BAR (same as other pages) -->
+  <div class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="Simarn Logo" />
-      <span>Simarn Staffing Portal</span>
+      <img src="logo.png" alt="Simarn" style="height:28px;vertical-align:middle;margin-right:8px;">
+      Simarn Staffing Portal
     </div>
+    <div class="nav">
+      <a class="active" href="index.html">Dashboard</a>
+      <a href="candidates.html">Candidates</a>
+      <a href="rtrs.html">RTRs</a>
+      <a href="recruiters.html">Recruiters</a>
+    </div>
+  </div>
 
-    <a href="index.html"><b>Dashboard</b></a>
-    <a href="candidates.html">Candidates</a>
-    <a href="rtrs.html">RTRs</a>
-    <a href="recruiters.html">Recruiters</a>
-  </nav>
-
+  <!-- PAGE CONTENT -->
   <div class="container">
     <div class="card">
       <h1>Dashboard</h1>
+
       <p>Total Candidates: <b id="candCount">-</b></p>
-      <p>Total RTRs: <b id="rtrCount">-</b></p>
-      <p>RTR Completion Rate: <b id="rtrRate">-</b></p>
+      <p>Total Submissions: <b id="subCount">-</b></p>
+
       <p class="small" id="err"></p>
-    </div>
-
-    <div class="card">
-      <h2 style="margin:0 0 10px;">Candidates by Role</h2>
-      <canvas id="candRoleChart"></canvas>
-    </div>
-
-    <div class="card">
-      <h2 style="margin:0 0 10px;">RTRs by Role</h2>
-      <canvas id="rtrRoleChart"></canvas>
     </div>
   </div>
 
   <script src="app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <script>
-    let candRoleChart, rtrRoleChart;
-
     async function loadDashboard() {
       const err = document.getElementById("err");
-      err.textContent = "";
-
       try {
         const r = await apiGet("dashboard");
         if (!r || r.ok === false) {
-          err.textContent = "Error: " + (r?.error || "API failed");
+          err.textContent = "Error loading dashboard";
           return;
         }
-
-        const totalCandidates = r.total_candidates ?? 0;
-        const totalRtrs = r.total_rtrs ?? 0;
-        const uniqueRtrCandidates = r.linked_rtr_candidates ?? 0;
-
-        document.getElementById("candCount").textContent = totalCandidates;
-        document.getElementById("rtrCount").textContent = totalRtrs;
-
-        const rate = totalCandidates > 0
-          ? Math.round((uniqueRtrCandidates / totalCandidates) * 100) + "%"
-          : "0%";
-        document.getElementById("rtrRate").textContent = rate;
-
-        // Candidates by role
-        const candByRole = r.candidates_by_role || {};
-        const candLabels = Object.keys(candByRole);
-        const candValues = candLabels.map(k => candByRole[k]);
-
-        const ctx1 = document.getElementById("candRoleChart").getContext("2d");
-        if (candRoleChart) candRoleChart.destroy();
-        candRoleChart = new Chart(ctx1, {
-          type: "bar",
-          data: { labels: candLabels, datasets: [{ label: "Candidates", data: candValues }] },
-          options: { responsive: true, plugins: { legend: { display: false } } }
-        });
-
-        // RTRs by role
-        const rtrByRole = r.rtrs_by_role || {};
-        const rtrLabels = Object.keys(rtrByRole);
-        const rtrValues = rtrLabels.map(k => rtrByRole[k]);
-
-        const ctx2 = document.getElementById("rtrRoleChart").getContext("2d");
-        if (rtrRoleChart) rtrRoleChart.destroy();
-        rtrRoleChart = new Chart(ctx2, {
-          type: "bar",
-          data: { labels: rtrLabels, datasets: [{ label: "RTRs", data: rtrValues }] },
-          options: { responsive: true, plugins: { legend: { display: false } } }
-        });
-
+        document.getElementById("candCount").textContent = r.total_candidates;
+        document.getElementById("subCount").textContent = r.total_submissions;
       } catch (e) {
+        err.textContent = "API error";
         console.error(e);
-        err.textContent = "Error: API failed to load";
       }
     }
-
     loadDashboard();
   </script>
+
 </body>
 </html>
