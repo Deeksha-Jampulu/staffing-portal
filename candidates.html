@@ -6,16 +6,13 @@
   <title>Staffing Portal - Candidates</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <!-- ✅ SAME TOP BAR AS DASHBOARD -->
+
   <div class="topbar">
     <div class="brand">
-      <!-- If your dashboard logo is different, copy that exact <img> line here -->
-      <img src="logo.png" alt="Logo" class="logo" />
-      <span>Simarn Staffing Portal</span>
+      <img src="logo.png" alt="Logo" />
+      <span>Staffing Portal</span>
     </div>
-
     <div class="nav">
       <a href="index.html">Dashboard</a>
       <a class="active" href="candidates.html">Candidates</a>
@@ -29,47 +26,44 @@
       <h1>Candidates</h1>
       <p class="small">Add candidate + store resume as Google Drive link.</p>
 
-      <div class="form-grid">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input id="name" placeholder="Name *" />
         <input id="email" placeholder="Email" />
-        <input id="phone" placeholder="Phone (+1..., etc)" />
+        <input id="phone" placeholder="Phone (+1...)" />
         <input id="location" placeholder="Location" />
-
-        <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" class="span-2" />
-        <input id="resume_link" placeholder="Resume Link (Google Drive)" class="span-2" />
-        <textarea id="notes" placeholder="Notes about candidate" class="span-2 notes-box"></textarea>
+        <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" style="grid-column:1 / span 2;" />
+        <input id="resume_link" placeholder="Resume Link (Google Drive)" style="grid-column:1 / span 2;" />
+        <textarea id="notes" placeholder="Notes about candidate" style="grid-column:1 / span 2;min-height:70px;"></textarea>
       </div>
 
       <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
         <button id="btnAdd">Add Candidate</button>
         <span class="small" id="status"></span>
       </div>
+      <p class="small" id="err"></p>
     </div>
 
     <div class="card">
       <h2 style="margin:0 0 10px;">Candidate List</h2>
-
       <input id="search" placeholder="Search by name/email/role..." style="width:100%;margin-bottom:10px;" />
 
-      <div class="table-wrap">
-        <table id="tbl" class="data-table">
+      <div class="tablewrap">
+        <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Domain/Role</th>
-              <th>Location</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Resume</th>
+              <th style="width:140px;">Name</th>
+              <th style="width:140px;">Domain/Role</th>
+              <th style="width:110px;">Location</th>
+              <th style="width:170px;">Email</th>
+              <th style="width:130px;">Phone</th>
+              <th style="width:80px;">Resume</th>
               <th>Notes</th>
-              <th>Created</th>
+              <th style="width:110px;">Created</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
-
-      <p class="small" id="err"></p>
     </div>
   </div>
 
@@ -80,41 +74,24 @@
     const tbody = document.getElementById("tbody");
     let all = [];
 
-    function esc(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
-    }
-
-    function fmtDate(d){
-      if (!d) return "";
-      const dt = new Date(d);
-      if (isNaN(dt.getTime())) return esc(d);
-      return dt.toLocaleDateString();
-    }
+    function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 
     function render(list){
       tbody.innerHTML = "";
       list.forEach(c => {
-        const resume = c.resume_link
-          ? `<a href="${esc(c.resume_link)}" target="_blank" rel="noopener">View</a>`
-          : "-";
-
-        const email = c.email
-          ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`
-          : "-";
+        const resume = c.resume_link ? `<a href="${esc(c.resume_link)}" target="_blank">View</a>` : "-";
+        const email = c.email ? `<a class="email" href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "-";
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="col-name">${esc(c.name)}</td>
-          <td class="col-role">${esc(c.domain_role || "")}</td>
-          <td class="col-loc">${esc(c.location || "")}</td>
-          <td class="col-email">${email}</td>
-          <td class="col-phone">${esc(c.phone || "")}</td>
-          <td class="col-resume">${resume}</td>
-          <td class="col-notes">${esc(c.notes || "")}</td>
-          <td class="col-created">${fmtDate(c.created_at)}</td>
+          <td>${esc(c.name)}</td>
+          <td class="nowrap">${esc(c.domain_role)}</td>
+          <td class="nowrap">${esc(c.location)}</td>
+          <td>${email}</td>
+          <td class="phone">${esc(c.phone)}</td>
+          <td>${resume}</td>
+          <td class="notes">${esc(c.notes)}</td>
+          <td class="nowrap">${c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -162,9 +139,7 @@
         const r = await apiPost("addCandidate", payload);
         if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
 
-        ["name","email","phone","location","domain_role","resume_link","notes"]
-          .forEach(id => document.getElementById(id).value = "");
-
+        ["name","email","phone","location","domain_role","resume_link","notes"].forEach(id => document.getElementById(id).value = "");
         statusEl.textContent = "Saved ✅";
         await load();
         setTimeout(()=>statusEl.textContent="", 1200);
