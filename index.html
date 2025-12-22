@@ -3,46 +3,79 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Staffing Portal - Dashboard</title>
-  <link rel="stylesheet" href="style.css?v=10" />
+  <title>Simarn Staffing Portal</title>
+  <link rel="stylesheet" href="style.css?v=50" />
 </head>
 
 <body>
   <nav>
-   <a href="index.html">Dashboard</a>
-   <a href="candidates.html">Candidates</a>
-   <a href="rtrs.html">RTRs</a>
-   <a href="recruiters.html">Recruiters</a>
+    <div class="brand">
+      <img src="logo.png" alt="Simarn Logo" />
+      <span>Simarn Staffing Portal</span>
+    </div>
+
+    <a href="index.html"><b>Dashboard</b></a>
+    <a href="candidates.html">Candidates</a>
+    <a href="rtrs.html">RTRs</a>
+    <a href="recruiters.html">Recruiters</a>
   </nav>
 
-
   <div class="container">
+
+    <!-- TOP STATS -->
     <div class="card">
       <h1>Dashboard</h1>
 
       <p>Total Candidates: <b id="candCount">-</b></p>
-      <p>Total RTRs: <b id="rtrCount">-</b></p>
+      <p>RTRs Completed (Total): <b id="rtrCount">-</b></p>
+      <p>RTRs Completed (Unique Candidates): <b id="rtrUnique">-</b></p>
+      <p>RTR Completion Rate: <b id="rtrRate">-</b></p>
       <p>Total Submissions: <b id="subCount">-</b></p>
 
       <p class="small" id="err"></p>
     </div>
 
+    <!-- CHARTS -->
     <div class="card">
       <h1 style="font-size:18px;">Candidates by Domain/Role</h1>
-      <canvas id="roleChart" height="120"></canvas>
+      <canvas id="candRoleChart" height="120"></canvas>
     </div>
 
     <div class="card">
-      <h1 style="font-size:18px;">RTRs Completed vs Total Candidates</h1>
-      <canvas id="rtrChart" height="120"></canvas>
+      <h1 style="font-size:18px;">RTRs Completed vs Remaining (Unique Candidates)</h1>
+      <canvas id="rtrDonut" height="120"></canvas>
     </div>
+
+    <div class="card">
+      <h1 style="font-size:18px;">RTRs by Domain/Role</h1>
+      <canvas id="rtrRoleChart" height="120"></canvas>
+    </div>
+
+    <!-- RECENT ACTIVITY -->
+    <div class="card">
+      <h1 style="font-size:18px;">Recent RTR Activity</h1>
+
+      <table border="1" width="100%" cellpadding="8" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Domain/Role</th>
+            <th>RTR Date</th>
+          </tr>
+        </thead>
+        <tbody id="recentRows"></tbody>
+      </table>
+    </div>
+
   </div>
 
   <script src="app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    let roleChart, rtrChart;
+    let candRoleChart, rtrRoleChart, rtrDonut;
+
+    function esc(x){ return String(x ?? ""); }
 
     async function loadDashboard() {
       const err = document.getElementById("err");
@@ -50,49 +83,77 @@
 
       try {
         const r = await apiGet("dashboard");
-
         if (!r || r.ok === false) {
           err.textContent = "Error: " + (r?.error || "API failed");
           return;
         }
 
-        // Counts
-        document.getElementById("candCount").textContent = r.total_candidates ?? 0;
-        document.getElementById("rtrCount").textContent = r.total_rtrs ?? 0;
-        document.getElementById("subCount").textContent = r.total_submissions ?? 0;
+        const totalCandidates = r.total_candidates ?? 0;
+        const totalRtrs = r.total_rtrs ?? 0;
+        const uniqueRtrCandidates = r.linked_rtr_candidates ?? 0;
+        const totalSubs = r.total_submissions ?? 0;
 
-        // -------- Bar chart: candidates by role --------
-        const byRole = r.candidates_by_role || {};
-        const labels = Object.keys(byRole);
-        const values = labels.map(k => byRole[k]);
+        document.getElementById("candCount").textContent = totalCandidates;
+        document.getElementById("rtrCount").textContent = totalRtrs;
+        document.getElementById("rtrUnique").textContent = uniqueRtrCandidates;
+        document.getElementById("subCount").textContent = totalSubs;
 
-        const ctx1 = document.getElementById("roleChart").getContext("2d");
-        if (roleChart) roleChart.destroy();
-        roleChart = new Chart(ctx1, {
+        const rate = totalCandidates > 0
+          ? Math.round((uniqueRtrCandidates / totalCandidates) * 100) + "%"
+          : "0%";
+        document.getElementById("rtrRate").textContent = rate;
+
+        // 1) Candidates by role
+        const candByRole = r.candidates_by_role || {};
+        const candLabels = Object.keys(candByRole);
+        const candValues = candLabels.map(k => candByRole[k]);
+
+        const ctx1 = document.getElementById("candRoleChart").getContext("2d");
+        if (candRoleChart) candRoleChart.destroy();
+        candRoleChart = new Chart(ctx1, {
           type: "bar",
-          data: {
-            labels: labels,
-            datasets: [{ label: "Candidates", data: values }]
-          },
-          options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
-          }
+          data: { labels: candLabels, datasets: [{ label: "Candidates", data: candValues }] },
+          options: { responsive: true, plugins: { legend: { display: false } } }
         });
 
-        // -------- Donut chart: RTRs vs remaining --------
-        const total = r.total_candidates ?? 0;
-        const rtrs = r.total_rtrs ?? 0;
-
-        const ctx2 = document.getElementById("rtrChart").getContext("2d");
-        if (rtrChart) rtrChart.destroy();
-        rtrChart = new Chart(ctx2, {
+        // 2) RTR donut using UNIQUE candidates
+        const remaining = Math.max(totalCandidates - uniqueRtrCandidates, 0);
+        const ctx2 = document.getElementById("rtrDonut").getContext("2d");
+        if (rtrDonut) rtrDonut.destroy();
+        rtrDonut = new Chart(ctx2, {
           type: "doughnut",
           data: {
-            labels: ["RTRs Completed", "Remaining"],
-            datasets: [{ data: [rtrs, Math.max(total - rtrs, 0)] }]
+            labels: ["RTR Completed (Unique)", "Remaining"],
+            datasets: [{ data: [uniqueRtrCandidates, remaining] }]
           },
           options: { responsive: true }
+        });
+
+        // 3) RTRs by role
+        const rtrByRole = r.rtrs_by_role || {};
+        const rtrLabels = Object.keys(rtrByRole);
+        const rtrValues = rtrLabels.map(k => rtrByRole[k]);
+
+        const ctx3 = document.getElementById("rtrRoleChart").getContext("2d");
+        if (rtrRoleChart) rtrRoleChart.destroy();
+        rtrRoleChart = new Chart(ctx3, {
+          type: "bar",
+          data: { labels: rtrLabels, datasets: [{ label: "RTRs", data: rtrValues }] },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        // Recent RTRs table
+        const recent = r.recent_rtrs || [];
+        const tbody = document.getElementById("recentRows");
+        tbody.innerHTML = "";
+        recent.forEach(x => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${esc(x.candidate_name)}</td>
+              <td>${esc(x.domain_role)}</td>
+              <td>${esc(x.rtr_date)}</td>
+            </tr>
+          `;
         });
 
       } catch (e) {
@@ -105,4 +166,3 @@
   </script>
 </body>
 </html>
-
