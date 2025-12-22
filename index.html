@@ -4,19 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Staffing Portal - Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 
 <body>
-  <!-- Top bar (black nav) -->
-  <div class="topbar">
-    <div class="brand">Staffing Portal</div>
-    <div class="nav">
-      <a class="active" href="index.html">Dashboard</a>
-      <a href="candidates.html">Candidates</a>
-      <a href="recruiters.html">Recruiters</a>
-    </div>
-  </div>
+  <nav>
+    <a href="index.html">Dashboard</a>
+    <a href="candidates.html">Candidates</a>
+    <a href="recruiters.html">Recruiters</a>
+  </nav>
 
   <div class="container">
     <div class="card">
@@ -32,15 +28,12 @@
     async function loadDashboard() {
       const err = document.getElementById("err");
       err.textContent = "";
-
       try {
         const r = await apiGet("dashboard");
-
         if (!r || r.ok === false) {
           err.textContent = "Error: " + (r?.error || "API failed");
           return;
         }
-
         document.getElementById("candCount").textContent = r.total_candidates ?? 0;
         document.getElementById("subCount").textContent = r.total_submissions ?? 0;
       } catch (e) {
@@ -48,7 +41,6 @@
         err.textContent = "Error: API failed to load";
       }
     }
-
     loadDashboard();
   </script>
 </body>
