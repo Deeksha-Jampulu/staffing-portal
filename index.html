@@ -3,80 +3,105 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Staffing Portal - Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Simarn Staffing Portal</title>
+  <link rel="stylesheet" href="style.css?v=999" />
 </head>
-<body>
 
-  <div class="topbar">
+<body>
+  <nav>
     <div class="brand">
-      <img src="logo.png" alt="Logo" />
-      <span>Staffing Portal</span>
+      <img src="logo.png" alt="Simarn Logo" />
+      <span>Simarn Staffing Portal</span>
     </div>
-    <div class="nav">
-      <a class="active" href="index.html">Dashboard</a>
-      <a href="candidates.html">Candidates</a>
-      <a href="rtrs.html">RTRs</a>
-      <a href="recruiters.html">Recruiters</a>
-    </div>
-  </div>
+
+    <a href="index.html"><b>Dashboard</b></a>
+    <a href="candidates.html">Candidates</a>
+    <a href="rtrs.html">RTRs</a>
+    <a href="recruiters.html">Recruiters</a>
+  </nav>
 
   <div class="container">
     <div class="card">
       <h1>Dashboard</h1>
       <p>Total Candidates: <b id="candCount">-</b></p>
       <p>Total RTRs: <b id="rtrCount">-</b></p>
-      <p>Total Submissions: <b id="subCount">-</b></p>
+      <p>RTR Completion Rate: <b id="rtrRate">-</b></p>
       <p class="small" id="err"></p>
     </div>
 
     <div class="card">
-      <h2 style="margin:0 0 10px;">Role-wise split (Candidates)</h2>
-      <div class="tablewrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Domain/Role</th>
-              <th class="nowrap">Count</th>
-            </tr>
-          </thead>
-          <tbody id="roleRows"></tbody>
-        </table>
-      </div>
+      <h2 style="margin:0 0 10px;">Candidates by Role</h2>
+      <canvas id="candRoleChart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 10px;">RTRs by Role</h2>
+      <canvas id="rtrRoleChart"></canvas>
     </div>
   </div>
 
   <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script>
-    async function loadDashboard(){
+    let candRoleChart, rtrRoleChart;
+
+    async function loadDashboard() {
       const err = document.getElementById("err");
       err.textContent = "";
 
-      try{
+      try {
         const r = await apiGet("dashboard");
-        if(!r || r.ok === false) throw new Error(r?.error || "API failed");
+        if (!r || r.ok === false) {
+          err.textContent = "Error: " + (r?.error || "API failed");
+          return;
+        }
 
-        document.getElementById("candCount").textContent = r.total_candidates ?? 0;
-        document.getElementById("rtrCount").textContent = r.total_rtrs ?? 0;
-        document.getElementById("subCount").textContent = r.total_submissions ?? 0;
+        const totalCandidates = r.total_candidates ?? 0;
+        const totalRtrs = r.total_rtrs ?? 0;
+        const uniqueRtrCandidates = r.linked_rtr_candidates ?? 0;
 
-        // Role table
-        const tbody = document.getElementById("roleRows");
-        tbody.innerHTML = "";
-        const obj = r.candidates_by_role || {};
-        Object.keys(obj).sort().forEach(k=>{
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${k}</td><td class="nowrap">${obj[k]}</td>`;
-          tbody.appendChild(tr);
+        document.getElementById("candCount").textContent = totalCandidates;
+        document.getElementById("rtrCount").textContent = totalRtrs;
+
+        const rate = totalCandidates > 0
+          ? Math.round((uniqueRtrCandidates / totalCandidates) * 100) + "%"
+          : "0%";
+        document.getElementById("rtrRate").textContent = rate;
+
+        // Candidates by role
+        const candByRole = r.candidates_by_role || {};
+        const candLabels = Object.keys(candByRole);
+        const candValues = candLabels.map(k => candByRole[k]);
+
+        const ctx1 = document.getElementById("candRoleChart").getContext("2d");
+        if (candRoleChart) candRoleChart.destroy();
+        candRoleChart = new Chart(ctx1, {
+          type: "bar",
+          data: { labels: candLabels, datasets: [{ label: "Candidates", data: candValues }] },
+          options: { responsive: true, plugins: { legend: { display: false } } }
         });
 
-      }catch(e){
-        err.textContent = "Error: " + e.message;
+        // RTRs by role
+        const rtrByRole = r.rtrs_by_role || {};
+        const rtrLabels = Object.keys(rtrByRole);
+        const rtrValues = rtrLabels.map(k => rtrByRole[k]);
+
+        const ctx2 = document.getElementById("rtrRoleChart").getContext("2d");
+        if (rtrRoleChart) rtrRoleChart.destroy();
+        rtrRoleChart = new Chart(ctx2, {
+          type: "bar",
+          data: { labels: rtrLabels, datasets: [{ label: "RTRs", data: rtrValues }] },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+      } catch (e) {
         console.error(e);
+        err.textContent = "Error: API failed to load";
       }
     }
+
     loadDashboard();
   </script>
 </body>
 </html>
-
