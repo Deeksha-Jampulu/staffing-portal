@@ -2,145 +2,145 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Candidates</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <nav>
     <a href="index.html">Dashboard</a>
-    <a href="candidates.html">Candidates</a>
+    <a href="candidates.html"><b>Candidates</b></a>
     <a href="recruiters.html">Recruiters</a>
   </nav>
 
   <div class="container">
     <div class="card">
       <h1>Candidates</h1>
-      <p class="small">Add candidate + store resume as Google Drive link.</p>
 
-      <!-- Add Candidate Form -->
-      <div class="card">
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <input id="full_name" placeholder="Full name" style="flex:1; min-width:220px;" />
-          <input id="email" placeholder="Email" style="flex:1; min-width:220px;" />
-        </div>
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-          <input id="phone" placeholder="Phone" style="flex:1; min-width:220px;" />
-          <input id="location" placeholder="Location" style="flex:1; min-width:220px;" />
-          <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" />
-          <textarea id="notes" placeholder="Notes about candidate"></textarea>
-
-        </div>
-
-        <div style="margin-top:10px;">
-          <input id="resume_link" placeholder="Resume link (Google Drive link)" style="width:100%;" />
-        </div>
-
-        <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
-          <button id="addBtn">Add Candidate</button>
-          <span id="msg" class="small"></span>
-        </div>
+      <h3>Add Candidate</h3>
+      <div class="form">
+        <input id="name" placeholder="Name *" />
+        <input id="email" placeholder="Email" />
+        <input id="phone" placeholder="Phone" />
+        <input id="location" placeholder="Location" />
+        <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" />
+        <textarea id="notes" placeholder="Notes about candidate" rows="3"></textarea>
+        <input id="resume_link" placeholder="Resume Link (Google Drive link)" />
+        <button id="addBtn">Add Candidate</button>
+        <p class="small" id="msg"></p>
       </div>
+    </div>
 
-      <!-- Search -->
-      <div style="margin-top:14px;">
-        <input id="search" placeholder="Search by name/email..." style="width:100%;" />
-      </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>Candidate List</h3>
 
-      <!-- Candidates Table -->
-      <div class="card" style="margin-top:14px; overflow:auto;">
-        <table style="width:100%; border-collapse:collapse;">
-          <thead>
-            <tr>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Name</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Email</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Phone</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Location</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Resume</th>
-              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Created</th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-
+      <table border="1" width="100%" cellpadding="8" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Domain/Role</th>
+            <th>Location</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Resume</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="candRows"></tbody>
+      </table>
     </div>
   </div>
-<script src="app.js"></script>
-<script>
-  let all = [];
 
-  async function loadCandidates() {
-    const r = await apiGet("candidates");
-    all = (r && r.ok) ? (r.data || []) : [];
-    renderCandidates();
-  }
+  <script src="app.js"></script>
+  <script>
+    async function loadCandidates() {
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
 
-  function renderCandidates() {
-    const q = (document.getElementById("search")?.value || "").toLowerCase();
-    const rows = (all || []).filter(c =>
-      String(c.full_name || "").toLowerCase().includes(q) ||
-      String(c.email || "").toLowerCase().includes(q)
-    );
+      try {
+        const r = await apiGet("candidates");
+        if (!r || r.ok === false) {
+          msg.textContent = "Error loading candidates";
+          return;
+        }
 
-    document.getElementById("rows").innerHTML = rows.map(c => `
-      <tr>
-        <td>${esc(c.full_name)}</td>
-        <td>${esc(c.email)}</td>
-        <td>${esc(c.phone)}</td>
-        <td>${esc(c.location)}</td>
-        <td>${c.resume_link ? `<a href="${esc(c.resume_link)}" target="_blank">View</a>` : `<span class="small">No link</span>`}</td>
-        <td class="small">${esc(c.created_at)}</td>
-      </tr>
-    `).join("");
-  }
+        const tbody = document.getElementById("candRows");
+        tbody.innerHTML = "";
 
-  async function addCandidate() {
-    const msg = document.getElementById("msg");
-    msg.textContent = "Saving...";
+        (r.data || []).forEach(c => {
+          const resumeCell = c.resume_link
+            ? `<a href="${c.resume_link}" target="_blank">View</a>`
+            : "-";
 
-    const full_name = document.getElementById("full_name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const location = document.getElementById("location").value.trim();
-    const resume_link = document.getElementById("resume_link").value.trim();
-
-    if (!full_name) {
-      msg.textContent = "Name is required";
-      return;
+          tbody.innerHTML += `
+            <tr>
+              <td>${c.name || ""}</td>
+              <td>${c.domain_role || ""}</td>
+              <td>${c.location || ""}</td>
+              <td>${c.email || ""}</td>
+              <td>${c.phone || ""}</td>
+              <td>${resumeCell}</td>
+              <td>${c.notes || ""}</td>
+            </tr>
+          `;
+        });
+      } catch (e) {
+        console.error(e);
+        msg.textContent = "Error: API failed to load";
+      }
     }
 
-    try {
-      const r = await apiPost({
-        route: "add_candidate",
-        full_name, email, phone, location, resume_link
-      });
+    async function addCandidate() {
+      const msg = document.getElementById("msg");
+      const btn = document.getElementById("addBtn");
+      msg.textContent = "Saving...";
+      btn.disabled = true;
 
-      if (r && r.ok) {
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        location: document.getElementById("location").value.trim(),
+        domain_role: document.getElementById("domain_role").value.trim(),
+        notes: document.getElementById("notes").value.trim(),
+        resume_link: document.getElementById("resume_link").value.trim()
+      };
+
+      if (!payload.name) {
+        msg.textContent = "Name is required";
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        const r = await apiPost("addCandidate", payload);
+        if (!r || r.ok === false) {
+          msg.textContent = "Error saving candidate";
+          btn.disabled = false;
+          return;
+        }
+
         msg.textContent = "Added ✅";
-        document.getElementById("full_name").value = "";
+        document.getElementById("name").value = "";
         document.getElementById("email").value = "";
         document.getElementById("phone").value = "";
         document.getElementById("location").value = "";
+        document.getElementById("domain_role").value = "";
+        document.getElementById("notes").value = "";
         document.getElementById("resume_link").value = "";
+
         await loadCandidates();
-      } else {
-        msg.textContent = "Error: " + (r?.error || "Unknown");
+      } catch (e) {
+        console.error(e);
+        msg.textContent = "Error: API failed to load";
+      } finally {
+        btn.disabled = false;
       }
-    } catch (e) {
-      msg.textContent = "Error: " + e.message;
-      console.error(e);
     }
-  }
 
-  // wire up button
-  document.getElementById("addBtn").addEventListener("click", addCandidate);
-
-  // wire up search (if present)
-  const s = document.getElementById("search");
-  if (s) s.addEventListener("input", renderCandidates);
-
-  // initial load
-  loadCandidates();
-</script>
-
+    document.getElementById("addBtn").addEventListener("click", addCandidate);
+    loadCandidates();
+  </script>
+</body>
+</html>
