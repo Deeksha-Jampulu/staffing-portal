@@ -8,162 +8,131 @@
 </head>
 <body>
 
-  <div class="topbar">
+  <nav class="topbar">
     <div class="brand">
       <img src="logo.png" alt="Simarn Logo" />
       <span>Simarn Staffing Portal</span>
     </div>
 
-    <div class="navlinks">
+    <div class="nav-links">
       <a class="active" href="index.html">Dashboard</a>
       <a href="candidates.html">Candidates</a>
       <a href="rtrs.html">RTRs</a>
       <a href="recruiters.html">Recruiters</a>
     </div>
-  </div>
+  </nav>
 
   <div class="container">
 
     <div class="card hero">
-      <div class="hero-left">
+      <div class="hero-text">
         <h1>Recruiting Snapshot</h1>
-        <p class="small">
+        <p style="margin:0;color:#6b7280;">
           Track candidates, RTR completions, submissions, and your most active roles — all in one clean dashboard.
         </p>
-        <p class="small" id="err"></p>
       </div>
 
-      <!-- Make sure team.png exists in your repo -->
-      <img class="hero-img" src="team.png" alt="Team" />
+      <div class="hero-img">
+        <!-- Put a real image file in your folder: team.png -->
+        <img src="team.png" alt="Team" />
+      </div>
     </div>
 
+    <!-- KPI cards -->
     <div class="kpi-grid">
-      <div class="card">
+      <div class="card kpi">
         <div class="kpi-title">Total Candidates</div>
-        <div class="kpi-value" id="candCount">-</div>
+        <div class="kpi-value" id="kpiCandidates">0</div>
         <div class="kpi-sub">All added profiles</div>
       </div>
 
-      <div class="card">
+      <div class="card kpi">
         <div class="kpi-title">RTRs Completed</div>
-        <div class="kpi-value" id="rtrCount">-</div>
+        <div class="kpi-value" id="kpiRtrs">0</div>
         <div class="kpi-sub">Total RTR records</div>
       </div>
 
-      <div class="card">
+      <div class="card kpi">
         <div class="kpi-title">Submissions</div>
-        <div class="kpi-value" id="subCount">-</div>
+        <div class="kpi-value" id="kpiSubs">0</div>
         <div class="kpi-sub">Total submissions</div>
       </div>
 
-      <div class="card">
+      <div class="card kpi">
         <div class="kpi-title">RTR Coverage</div>
-        <div class="kpi-value" id="coverage">-</div>
+        <div class="kpi-value" id="kpiCoverage">0/0</div>
         <div class="kpi-sub"># candidates with RTR / total candidates</div>
       </div>
     </div>
 
-    <!-- Charts (only if you already have chart.js in your project; if not, tell me and I’ll give that also) -->
+    <!-- Charts area (keep your existing charts if you already have them) -->
     <div class="grid-2">
-      <div class="card chartbox">
-        <h2>Candidates by Domain/Role</h2>
-        <canvas id="barRoles"></canvas>
+      <div class="card">
+        <h2 style="margin:0 0 10px;">Candidates by Domain/Role</h2>
+        <canvas id="chartRoles" height="140"></canvas>
       </div>
 
-      <div class="card chartbox">
-        <h2>RTR Coverage</h2>
-        <canvas id="donutCoverage"></canvas>
+      <div class="card">
+        <h2 style="margin:0 0 10px;">RTR Coverage</h2>
+        <canvas id="chartRtr" height="140"></canvas>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>Recent RTRs</h2>
-      <table>
-        <thead>
-          <tr>
-            <th align="left">Candidate</th>
-            <th align="left">Domain/Role</th>
-            <th align="left">RTR Date</th>
-          </tr>
-        </thead>
-        <tbody id="recentRtrs"></tbody>
-      </table>
     </div>
 
   </div>
 
   <script src="app.js"></script>
-
-  <!-- If you already added Chart.js file locally, keep it. If not, tell me. -->
-  <script src="chart.umd.min.js"></script>
+  <!-- If you use Chart.js, include it. If not, remove this line. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    function safeNum(x){ return Number(x || 0); }
-
+    // Simple dashboard loader (uses your API)
     async function loadDashboard(){
-      const err = document.getElementById("err");
-      try{
-        const r = await apiGet("dashboard");
-        if(!r || r.ok === false) throw new Error(r?.error || "API failed");
+      const cand = await apiGet("candidates");
+      const rtrs = await apiGet("rtrs");
+      const subs = await apiGet("submissions"); // if not supported, you can remove this
 
-        const totalCandidates = safeNum(r.total_candidates);
-        const totalRTRs = safeNum(r.total_rtrs);
-        const totalSubs = safeNum(r.total_submissions);
-        const linked = safeNum(r.linked_rtr_candidates);
+      const candidates = (cand?.data || []);
+      const rtrList = (rtrs?.data || []);
+      const submissions = (subs?.data || []);
 
-        document.getElementById("candCount").textContent = totalCandidates;
-        document.getElementById("rtrCount").textContent = totalRTRs;
-        document.getElementById("subCount").textContent = totalSubs;
-        document.getElementById("coverage").textContent = `${linked}/${totalCandidates}`;
+      document.getElementById("kpiCandidates").textContent = candidates.length;
+      document.getElementById("kpiRtrs").textContent = rtrList.length;
+      document.getElementById("kpiSubs").textContent = submissions.length;
 
-        // Recent RTRs table
-        const tb = document.getElementById("recentRtrs");
-        tb.innerHTML = "";
-        (r.recent_rtrs || []).forEach(x => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${x.candidate_name || ""}</td>
-            <td>${x.domain_role || ""}</td>
-            <td>${x.rtr_date || ""}</td>
-          `;
-          tb.appendChild(tr);
-        });
+      const covered = new Set(rtrList.map(x => x.candidate || x.candidate_name || x.name));
+      document.getElementById("kpiCoverage").textContent = `${covered.size}/${candidates.length}`;
 
-        // Charts
-        const roleMap = r.candidates_by_role || {};
-        const roleLabels = Object.keys(roleMap);
-        const roleValues = roleLabels.map(k => roleMap[k]);
+      // Chart: candidates by domain_role
+      const counts = {};
+      candidates.forEach(c => {
+        const k = (c.domain_role || "Unknown").trim();
+        counts[k] = (counts[k] || 0) + 1;
+      });
 
-        if(window.Chart){
-          const barEl = document.getElementById("barRoles");
-          new Chart(barEl, {
-            type: "bar",
-            data: { labels: roleLabels, datasets: [{ label: "Candidates", data: roleValues }] },
-            options: { responsive:true, maintainAspectRatio:false }
-          });
+      const roleLabels = Object.keys(counts);
+      const roleValues = Object.values(counts);
 
-          const donutEl = document.getElementById("donutCoverage");
-          new Chart(donutEl, {
-            type: "doughnut",
-            data: {
-              labels: ["RTR Completed", "Pending"],
-              datasets: [{
-                data: [linked, Math.max(totalCandidates - linked, 0)]
-              }]
-            },
-            options: { responsive:true, maintainAspectRatio:false }
-          });
-        }
+      // Bar chart
+      new Chart(document.getElementById("chartRoles"), {
+        type: "bar",
+        data: { labels: roleLabels, datasets: [{ label: "Candidates", data: roleValues }] },
+        options: { responsive:true, plugins:{ legend:{ display:false } } }
+      });
 
-        err.textContent = "";
-      }catch(e){
-        err.textContent = "Error: " + e.message;
-        console.error(e);
-      }
+      // Doughnut chart: RTR coverage
+      new Chart(document.getElementById("chartRtr"), {
+        type: "doughnut",
+        data: {
+          labels: ["RTR Done", "Pending"],
+          datasets: [{
+            data: [covered.size, Math.max(0, candidates.length - covered.size)]
+          }]
+        },
+        options: { responsive:true }
+      });
     }
 
     loadDashboard();
   </script>
-
 </body>
 </html>
