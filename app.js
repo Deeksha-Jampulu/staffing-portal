@@ -12,3 +12,13 @@ async function apiPost(route, payload) {
   });
   return await res.json();
 }
+// Auto-highlight active nav link based on current file name
+document.addEventListener("DOMContentLoaded", () => {
+  const path = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  document.querySelectorAll(".topbar .navlinks a").forEach(a => {
+    const href = (a.getAttribute("href") || "").toLowerCase();
+    if (href === path) a.classList.add("active");
+    else a.classList.remove("active");
+  });
+});
+
