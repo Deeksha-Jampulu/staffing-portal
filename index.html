@@ -4,217 +4,88 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Simarn Staffing Portal - Dashboard</title>
-
-  <!-- cache-bust css -->
   <link rel="stylesheet" href="style.css?v=999" />
-
-  <!-- Chart.js (for charts) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
   <nav>
     <div class="brand">
-      <img src="logo.png" alt="Simarn Logo" />
+      <img src="logo.png" alt="Logo" />
       <span>Simarn Staffing Portal</span>
     </div>
 
-    <a class="active" href="index.html">Dashboard</a>
-    <a href="candidates.html">Candidates</a>
-    <a href="rtrs.html">RTRs</a>
-    <a href="recruiters.html">Recruiters</a>
+    <div class="navlinks">
+      <a class="active" href="index.html">Dashboard</a>
+      <a href="candidates.html">Candidates</a>
+      <a href="rtrs.html">RTRs</a>
+      <a href="recruiters.html">Recruiters</a>
+    </div>
   </nav>
 
   <div class="container">
-
-    <!-- HERO -->
-    <div class="card hero">
-      <div class="hero-left">
-        <h1 class="hero-title">Recruiting Snapshot</h1>
-        <p class="hero-sub">
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+      <div>
+        <h1>Recruiting Snapshot</h1>
+        <p class="small" style="font-size:14px;margin:0;">
           Track candidates, RTR completions, submissions, and your most active roles — all in one clean dashboard.
         </p>
       </div>
 
-      <!-- Upload hero.png into repo -->
-      <img class="hero-img" src="hero.png" alt="Team Illustration" onerror="this.style.display='none'">
+      <!-- optional image (keep your teamwork image name) -->
+      <img src="teamwork.png" alt="Team" style="height:110px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.08);" />
     </div>
 
-    <!-- KPI CARDS -->
     <div class="kpi-grid">
       <div class="card">
-        <div class="kpi-title">Total Candidates</div>
-        <div class="kpi-value" id="kpiCandidates">-</div>
-        <div class="kpi-sub">All added profiles</div>
+        <div class="small">Total Candidates</div>
+        <div style="font-size:34px;font-weight:900;" id="candCount">-</div>
+        <div class="small">All added profiles</div>
       </div>
 
       <div class="card">
-        <div class="kpi-title">RTRs Completed</div>
-        <div class="kpi-value" id="kpiRTRs">-</div>
-        <div class="kpi-sub">Total RTR records</div>
+        <div class="small">RTRs Completed</div>
+        <div style="font-size:34px;font-weight:900;" id="rtrCount">-</div>
+        <div class="small">Total RTR records</div>
       </div>
 
       <div class="card">
-        <div class="kpi-title">Submissions</div>
-        <div class="kpi-value" id="kpiSubs">-</div>
-        <div class="kpi-sub">Total submissions</div>
+        <div class="small">Submissions</div>
+        <div style="font-size:34px;font-weight:900;" id="subCount">-</div>
+        <div class="small">Total submissions</div>
       </div>
 
       <div class="card">
-        <div class="kpi-title">RTR Coverage</div>
-        <div class="kpi-value" id="kpiCoverage">-</div>
-        <div class="kpi-sub">Candidates with RTR / total candidates</div>
+        <div class="small">RTR Coverage</div>
+        <div style="font-size:34px;font-weight:900;" id="coverage">-</div>
+        <div class="small"># candidates with RTR / total candidates</div>
       </div>
     </div>
 
-    <!-- CHARTS -->
-    <div class="grid-2">
-      <div class="card">
-        <h3 style="margin:0 0 10px;">Top Roles (Top 5)</h3>
-        <div class="chart-wrap">
-          <canvas id="roleChart"></canvas>
-        </div>
-        <p class="small" id="chartErr1"></p>
-      </div>
-
-      <div class="card">
-        <h3 style="margin:0 0 10px;">RTR Coverage</h3>
-        <div class="chart-wrap">
-          <canvas id="coverageChart"></canvas>
-        </div>
-        <p class="small" id="chartErr2"></p>
-      </div>
-    </div>
-
-    <!-- RECENT RTRs -->
-    <div class="card">
-      <h3 style="margin:0 0 10px;">Recent RTRs</h3>
-      <div style="overflow:auto;">
-        <table class="simple-table">
-          <thead>
-            <tr>
-              <th align="left">Candidate</th>
-              <th align="left">Domain/Role</th>
-              <th align="left">RTR Date</th>
-            </tr>
-          </thead>
-          <tbody id="recentTbody"></tbody>
-        </table>
-      </div>
-      <p class="small" id="err"></p>
-    </div>
-
+    <p class="small" id="err" style="margin-top:8px;"></p>
   </div>
 
   <script src="app.js"></script>
-
   <script>
-    let roleChart, coverageChart;
-
-    function topNFromObject(obj, n){
-      const entries = Object.entries(obj || {})
-        .map(([k,v]) => [String(k), Number(v || 0)])
-        .filter(x => x[0].trim() !== "")
-        .sort((a,b) => b[1] - a[1])
-        .slice(0, n);
-      return {
-        labels: entries.map(x => x[0]),
-        values: entries.map(x => x[1])
-      };
-    }
-
-    function renderRecent(list){
-      const tbody = document.getElementById("recentTbody");
-      tbody.innerHTML = "";
-      (list || []).slice(0,5).forEach(x => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${x.candidate_name || ""}</td>
-          <td>${x.domain_role || ""}</td>
-          <td>${x.rtr_date || ""}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      if(!list || list.length === 0){
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="3" class="small">No RTRs yet.</td>`;
-        tbody.appendChild(tr);
-      }
-    }
-
     async function loadDashboard(){
-      const errEl = document.getElementById("err");
-      errEl.textContent = "";
-
+      const err = document.getElementById("err");
       try{
         const r = await apiGet("dashboard");
         if(!r || r.ok === false) throw new Error(r?.error || "API failed");
 
-        // KPIs
-        const totalCandidates = Number(r.total_candidates || 0);
-        const totalRTRs = Number(r.total_rtrs || 0);
-        const totalSubs = Number(r.total_submissions || 0);
-        const linkedRTR = Number(r.linked_rtr_candidates || 0);
+        document.getElementById("candCount").textContent = r.total_candidates ?? 0;
+        document.getElementById("rtrCount").textContent  = r.total_rtrs ?? 0;
+        document.getElementById("subCount").textContent  = r.total_submissions ?? 0;
 
-        document.getElementById("kpiCandidates").textContent = totalCandidates;
-        document.getElementById("kpiRTRs").textContent = totalRTRs;
-        document.getElementById("kpiSubs").textContent = totalSubs;
-        document.getElementById("kpiCoverage").textContent = `${linkedRTR}/${totalCandidates}`;
+        const linked = r.linked_rtr_candidates ?? 0;
+        const total  = r.total_candidates ?? 0;
+        document.getElementById("coverage").textContent = `${linked}/${total}`;
 
-        // Recent RTRs table
-        renderRecent(r.recent_rtrs || []);
-
-        // Chart: Top roles (Top 5)
-        const t = topNFromObject(r.candidates_by_role, 5);
-        const c1 = document.getElementById("chartErr1");
-        c1.textContent = "";
-
-        if(t.labels.length === 0){
-          c1.textContent = "No role data yet. Add candidates with Domain/Role.";
-        } else {
-          if(roleChart) roleChart.destroy();
-          roleChart = new Chart(document.getElementById("roleChart"), {
-            type: "bar",
-            data: {
-              labels: t.labels,
-              datasets: [{ label: "Candidates", data: t.values }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: { y: { beginAtZero: true, ticks: { precision:0 } } }
-            }
-          });
-        }
-
-        // Chart: RTR Coverage donut
-        const c2 = document.getElementById("chartErr2");
-        c2.textContent = "";
-
-        const withoutRTR = Math.max(totalCandidates - linkedRTR, 0);
-
-        if(coverageChart) coverageChart.destroy();
-        coverageChart = new Chart(document.getElementById("coverageChart"), {
-          type: "doughnut",
-          data: {
-            labels: ["With RTR", "Without RTR"],
-            datasets: [{ data: [linkedRTR, withoutRTR] }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: "bottom" } }
-          }
-        });
-
-      } catch(e){
+        err.textContent = "";
+      }catch(e){
+        err.textContent = "Error: " + e.message;
         console.error(e);
-        errEl.textContent = "Error: " + e.message;
       }
     }
-
     loadDashboard();
   </script>
 </body>
