@@ -6,16 +6,14 @@
   <title>Simarn Staffing Portal - RTRs</title>
   <link rel="stylesheet" href="style.css?v=999" />
 </head>
-
 <body>
-  <!-- TOP BLACK BAR (same as other pages) -->
+
   <div class="topbar">
     <div class="brand">
-      <img class="logo" src="logo.png" alt="Simarn Logo" />
+      <img src="logo.png" alt="Simarn Logo" />
       <span>Simarn Staffing Portal</span>
     </div>
-
-    <div class="nav">
+    <div class="navlinks">
       <a href="index.html">Dashboard</a>
       <a href="candidates.html">Candidates</a>
       <a class="active" href="rtrs.html">RTRs</a>
@@ -26,119 +24,114 @@
   <div class="container">
     <div class="card">
       <h1>RTRs</h1>
-      <h3>Mark RTR Completed</h3>
+      <p class="small">Mark RTR completed for a candidate.</p>
 
-      <label class="small">Candidate</label>
-      <select id="candidateSelect" style="width:100%;padding:10px;margin:6px 0 12px;"></select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label class="small">Candidate</label>
+          <select id="candidateSelect"></select>
+          <p class="small">Select a candidate and click Add RTR.</p>
+        </div>
 
-      <p class="small">Select a candidate and click Add RTR.</p>
+        <div>
+          <label class="small">RTR Date</label>
+          <input id="rtr_date" type="date" />
+        </div>
+      </div>
 
-      <label class="small">RTR Date</label>
-      <input id="rtrDate" type="date" style="width:100%;padding:10px;margin:6px 0 12px;" />
-
-      <button id="btnAddRTR">Add RTR</button>
-      <p class="small" id="msg"></p>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+        <button id="btnAddRTR">Add RTR</button>
+        <span class="small" id="msg"></span>
+      </div>
     </div>
 
     <div class="card">
-      <h2 style="margin:0 0 10px;">Recent RTRs</h2>
-
-      <div style="overflow:auto;">
-        <table class="simple-table">
-          <thead>
-            <tr>
-              <th align="left">Candidate</th>
-              <th align="left">Domain/Role</th>
-              <th align="left">RTR Date</th>
-            </tr>
-          </thead>
-          <tbody id="rtrRows"></tbody>
-        </table>
-      </div>
+      <h2>Recent RTRs</h2>
+      <table>
+        <thead>
+          <tr>
+            <th align="left">Candidate</th>
+            <th align="left">Domain/Role</th>
+            <th align="left">RTR Date</th>
+          </tr>
+        </thead>
+        <tbody id="rtrRows"></tbody>
+      </table>
+      <p class="small" id="err"></p>
     </div>
   </div>
 
   <script src="app.js"></script>
   <script>
+    const sel = document.getElementById("candidateSelect");
     const msg = document.getElementById("msg");
-    const candidateSelect = document.getElementById("candidateSelect");
-    const rtrRows = document.getElementById("rtrRows");
+    const err = document.getElementById("err");
+    const rows = document.getElementById("rtrRows");
 
-    function esc(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
-    }
+    function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 
-    async function loadCandidatesForDropdown(){
+    async function loadCandidates(){
       const r = await apiGet("candidates");
-      if(!r || r.ok === false) throw new Error(r?.error || "Failed to load candidates");
-
-      const list = r.data || [];
-      candidateSelect.innerHTML = "";
-
-      list.forEach(c => {
+      if(!r || r.ok === false) throw new Error("Candidates API failed");
+      sel.innerHTML = "";
+      (r.data || []).forEach(c => {
         const opt = document.createElement("option");
         opt.value = c.candidate_id || "";
-        opt.textContent = `${c.name || ""} (${c.domain_role || "Unknown"})`;
+        opt.textContent = `${c.name || ""} (${c.domain_role || ""})`;
         opt.dataset.name = c.name || "";
         opt.dataset.role = c.domain_role || "";
-        candidateSelect.appendChild(opt);
+        sel.appendChild(opt);
       });
     }
 
-    async function loadRecentRTRs(){
+    async function loadRTRs(){
+      err.textContent = "";
       const r = await apiGet("rtrs");
-      if(!r || r.ok === false) throw new Error(r?.error || "Failed to load RTRs");
-
-      const list = (r.data || []).slice().reverse().slice(0, 10);
-
-      rtrRows.innerHTML = "";
-      list.forEach(x => {
+      if(!r || r.ok === false) throw new Error("RTRs API failed");
+      rows.innerHTML = "";
+      (r.data || []).slice().reverse().slice(0,10).forEach(x => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${esc(x.candidate_name)}</td>
           <td>${esc(x.domain_role)}</td>
           <td>${esc(x.rtr_date)}</td>
         `;
-        rtrRows.appendChild(tr);
+        rows.appendChild(tr);
       });
     }
 
     document.getElementById("btnAddRTR").addEventListener("click", async () => {
       msg.textContent = "Saving...";
+      err.textContent = "";
       try{
-        const opt = candidateSelect.options[candidateSelect.selectedIndex];
-        const candidate_id = candidateSelect.value;
-        const candidate_name = opt?.dataset?.name || "";
-        const domain_role = opt?.dataset?.role || "";
-        const rtr_date = document.getElementById("rtrDate").value;
-
-        if(!candidate_id) throw new Error("Pick a candidate");
-        if(!rtr_date) throw new Error("Pick RTR date");
-
-        const r = await apiPost("addRTR", { candidate_id, candidate_name, domain_role, rtr_date });
+        const selected = sel.options[sel.selectedIndex];
+        const payload = {
+          candidate_id: sel.value,
+          candidate_name: selected?.dataset?.name || selected?.textContent || "",
+          domain_role: selected?.dataset?.role || "",
+          rtr_date: document.getElementById("rtr_date").value
+        };
+        const r = await apiPost("addRTR", payload);
         if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
-
-        msg.textContent = "RTR added ✅";
-        await loadRecentRTRs();
+        msg.textContent = "Saved ✅";
+        await loadRTRs();
         setTimeout(()=>msg.textContent="", 1200);
       }catch(e){
-        console.error(e);
-        msg.textContent = "Error: " + e.message;
+        msg.textContent = "";
+        err.textContent = "Error: " + e.message;
       }
     });
 
-    (async () => {
+    (async function init(){
       try{
-        // default date = today
-        document.getElementById("rtrDate").value = new Date().toISOString().slice(0,10);
-        await loadCandidatesForDropdown();
-        await loadRecentRTRs();
+        // default today
+        const d = new Date();
+        document.getElementById("rtr_date").value = d.toISOString().slice(0,10);
+
+        await loadCandidates();
+        await loadRTRs();
       }catch(e){
-        console.error(e);
-        msg.textContent = "Error: API failed to load";
+        err.textContent = "Error: " + e.message;
       }
     })();
   </script>
