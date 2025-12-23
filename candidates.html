@@ -4,18 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Simarn Staffing Portal - Candidates</title>
-  <link rel="stylesheet" href="style.css?v=300" />
+  <link rel="stylesheet" href="style.css?v=999" />
 </head>
 <body>
 
-  <!-- SAME TOP BAR on every page -->
   <div class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="Logo" />
-      <span>Simarn Staffing Portal</span>
+      <img class="logo" src="logo.png" alt="Logo" />
+      <div>Simarn Staffing Portal</div>
     </div>
 
-    <div class="navlinks">
+    <div class="nav">
       <a href="index.html">Dashboard</a>
       <a class="active" href="candidates.html">Candidates</a>
       <a href="rtrs.html">RTRs</a>
@@ -48,7 +47,7 @@
       <h2 style="margin:0 0 10px;">Candidate List</h2>
       <input id="search" placeholder="Search by name/email/role..." style="width:100%;margin-bottom:10px;" />
 
-      <div style="overflow:auto;">
+      <div class="table-wrap">
         <table>
           <thead>
             <tr>
@@ -70,7 +69,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=300"></script>
+  <script src="app.js"></script>
   <script>
     const statusEl = document.getElementById("status");
     const errEl = document.getElementById("err");
@@ -93,7 +92,7 @@
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="nowrap">${esc(c.name)}</td>
+          <td>${esc(c.name)}</td>
           <td class="nowrap">${esc(c.domain_role)}</td>
           <td class="nowrap">${esc(c.location)}</td>
           <td class="emailcell">${email}</td>
