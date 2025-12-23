@@ -1,6 +1,6 @@
 body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; }
 
-/* ---------- TOP BAR (use this on ALL pages) ---------- */
+/* ===== TOP BAR (use this everywhere) ===== */
 .topbar{
   background:#111827;
   color:#fff;
@@ -10,59 +10,54 @@ body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; }
   padding:10px 16px;
 }
 
-.topbar .brand{
+.brand{
   display:flex;
   align-items:center;
   gap:10px;
   font-weight:800;
 }
 
-.topbar .logo{
+.brand img{
   height:28px;
   width:auto;
   display:block;
-  background:#fff;
   border-radius:6px;
-  padding:2px;
 }
 
-.topbar .nav{
+.navlinks{
   display:flex;
-  align-items:center;
   gap:18px;
-  flex-wrap:wrap;
+  align-items:center;
 }
 
-.topbar .nav a{
+.navlinks a{
   color:#fff;
   text-decoration:none;
   font-weight:700;
   opacity:.9;
 }
 
-.topbar .nav a:hover{ opacity:1; }
+.navlinks a:hover{ opacity:1; }
 
-.topbar .nav a.active{
+.navlinks a.active{
   opacity:1;
   text-decoration:underline;
 }
 
-/* ---------- LAYOUT ---------- */
+/* ===== LAYOUT ===== */
 .container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
-.card { background: #fff; padding: 16px; border-radius: 10px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
 h1 { margin: 0 0 12px; font-size: 22px; }
 .small { color: #6b7280; font-size: 12px; }
 
-/* ---------- TABLE FIX ---------- */
+/* ===== TABLE (prevents overlap) ===== */
 table{ width:100%; border-collapse:collapse; }
-th, td{ padding:10px; vertical-align:top; }
-td{ border-bottom:1px solid #f1f5f9; }
-
+th, td{ padding:10px; vertical-align:top; border-bottom:1px solid #e5e7eb; }
 .nowrap{ white-space:nowrap; }
 .emailcell a{ word-break:break-all; }
 .notes{ max-width:320px; white-space:normal; word-break:break-word; }
 
-/* ---------- DASHBOARD LAYOUT ---------- */
+/* ===== Dashboard helper grids (optional) ===== */
 .kpi-grid{
   display:grid;
   grid-template-columns:repeat(4, minmax(0, 1fr));
