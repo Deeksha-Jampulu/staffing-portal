@@ -1,77 +1,80 @@
-body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; }
+/* ===== Base ===== */
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; margin: 0; background: #f6f7fb; color:#111; }
 
-/* ===== TOP BAR (use this everywhere) ===== */
+.container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+h1 { margin: 0 0 12px; font-size: 22px; }
+.small { color: #6b7280; font-size: 12px; }
+
+/* ===== ONE shared Top Bar (use this in every page) ===== */
 .topbar{
   background:#111827;
   color:#fff;
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  gap:16px;
   padding:10px 16px;
 }
 
-.brand{
+/* Brand (logo + title) */
+.topbar .brand{
   display:flex;
   align-items:center;
   gap:10px;
   font-weight:800;
+  white-space:nowrap;
 }
-
-.brand img{
-  height:28px;
+.topbar .logo{
+  height:30px;     /* keeps it consistent */
   width:auto;
   display:block;
   border-radius:6px;
 }
 
-.navlinks{
+/* Nav links */
+.topbar .nav{
+  margin-left:auto;     /* pushes links to RIGHT */
   display:flex;
-  gap:18px;
+  gap:16px;
   align-items:center;
+  flex-wrap:wrap;
 }
-
-.navlinks a{
+.topbar .nav a{
   color:#fff;
   text-decoration:none;
   font-weight:700;
   opacity:.9;
+  padding:6px 8px;
+  border-radius:8px;
 }
-
-.navlinks a:hover{ opacity:1; }
-
-.navlinks a.active{
+.topbar .nav a:hover{ opacity:1; background: rgba(255,255,255,.06); }
+.topbar .nav a.active{
   opacity:1;
-  text-decoration:underline;
+  text-decoration: underline;
+  background: rgba(255,255,255,.06);
 }
 
-/* ===== LAYOUT ===== */
-.container { max-width: 1100px; margin: 20px auto; padding: 0 16px; }
-.card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
-h1 { margin: 0 0 12px; font-size: 22px; }
-.small { color: #6b7280; font-size: 12px; }
+/* ===== Tables ===== */
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout: fixed;     /* prevents overlap */
+}
+th, td{ padding:10px; vertical-align:top; }
+thead th{ border-bottom:1px solid #e5e7eb; font-size:14px; }
+tbody td{ border-bottom:1px solid #f1f5f9; font-size:14px; }
 
-/* ===== TABLE (prevents overlap) ===== */
-table{ width:100%; border-collapse:collapse; }
-th, td{ padding:10px; vertical-align:top; border-bottom:1px solid #e5e7eb; }
+/* Cells formatting */
 .nowrap{ white-space:nowrap; }
-.emailcell a{ word-break:break-all; }
-.notes{ max-width:320px; white-space:normal; word-break:break-word; }
+.emailcell a{ word-break: break-all; }   /* email wraps safely */
+.notes{ white-space:normal; word-break:break-word; max-width:360px; }
 
-/* ===== Dashboard helper grids (optional) ===== */
-.kpi-grid{
-  display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:14px;
-  margin-bottom:14px;
-}
-@media (max-width: 900px){
-  .kpi-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
-}
-.grid-2{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:14px;
-}
-@media (max-width: 900px){
-  .grid-2{ grid-template-columns:1fr; }
-}
+/* Make table scroll on small screens */
+.table-wrap{ overflow:auto; }
