@@ -10,11 +10,10 @@
 
   <div class="topbar">
     <div class="brand">
-      <img class="logo" src="logo.png" alt="Logo" />
-      <div>Simarn Staffing Portal</div>
+      <img src="logo.png" alt="Simarn Logo" />
+      <span>Simarn Staffing Portal</span>
     </div>
-
-    <div class="nav">
+    <div class="navlinks">
       <a href="index.html">Dashboard</a>
       <a href="candidates.html">Candidates</a>
       <a href="rtrs.html">RTRs</a>
@@ -25,82 +24,66 @@
   <div class="container">
     <div class="card">
       <h1>Recruiters</h1>
-      <h3>Add Recruiter</h3>
+      <p class="small">Add recruiters and maintain contact list.</p>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input id="rec_name" placeholder="Recruiter Name *" />
         <input id="rec_mobile" placeholder="Mobile Number * (ex: 4691234567)" />
-        <button id="addRecBtn">Add Recruiter</button>
       </div>
 
-      <p class="small" id="msg"></p>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+        <button id="addRecBtn">Add Recruiter</button>
+        <span class="small" id="msg"></span>
+      </div>
     </div>
 
     <div class="card">
-      <h3>Recruiters List</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th align="left">Name</th>
-              <th align="left">Mobile</th>
-            </tr>
-          </thead>
-          <tbody id="recRows"></tbody>
-        </table>
-      </div>
+      <h2>Recruiters List</h2>
+      <table>
+        <thead>
+          <tr>
+            <th align="left">Name</th>
+            <th align="left">Mobile</th>
+          </tr>
+        </thead>
+        <tbody id="recRows"></tbody>
+      </table>
     </div>
   </div>
 
   <script src="app.js"></script>
   <script>
-    function esc(x){
-      return String(x ?? "")
+    const msg = document.getElementById("msg");
+    const tbody = document.getElementById("recRows");
+
+    function esc(s){
+      return String(s ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
         .replaceAll(">","&gt;");
     }
 
-    async function loadRecruiters() {
-      const msg = document.getElementById("msg");
+    async function loadRecruiters(){
       msg.textContent = "";
+      const r = await apiGet("recruiters");
+      if(!r || r.ok === false) throw new Error("Recruiters API failed");
 
-      try {
-        const r = await apiGet("recruiters");
-        if (!r || r.ok === false) {
-          msg.textContent = "Error loading recruiters";
-          return;
-        }
-
-        const tbody = document.getElementById("recRows");
-        tbody.innerHTML = "";
-
-        (r.data || []).forEach(rec => {
-          const mobile = esc(rec.mobile).trim();
-          const mobileLink = mobile ? `<a href="tel:${mobile}">${mobile}</a>` : "";
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${esc(rec.name)}</td>
-            <td class="nowrap">${mobileLink}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-      } catch (e) {
-        console.error(e);
-        msg.textContent = "Error: API failed to load";
-      }
+      tbody.innerHTML = "";
+      (r.data || []).forEach(rec => {
+        const mobile = String(rec.mobile || "").trim();
+        const mobileLink = mobile ? `<a href="tel:${esc(mobile)}">${esc(mobile)}</a>` : "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${esc(rec.name)}</td><td>${mobileLink}</td>`;
+        tbody.appendChild(tr);
+      });
     }
 
-    async function addRecruiter() {
-      const msg = document.getElementById("msg");
+    async function addRecruiter(){
       const btn = document.getElementById("addRecBtn");
-
       const name = document.getElementById("rec_name").value.trim();
       const mobile = document.getElementById("rec_mobile").value.trim();
 
-      if (!name || !mobile) {
+      if(!name || !mobile){
         msg.textContent = "Name and Mobile are required";
         return;
       }
@@ -108,28 +91,26 @@
       btn.disabled = true;
       msg.textContent = "Saving...";
 
-      try {
+      try{
         const r = await apiPost("addRecruiter", { name, mobile });
-        if (!r || r.ok === false) {
-          msg.textContent = "Error saving recruiter";
-          return;
-        }
-
+        if(!r || r.ok === false) throw new Error("Save failed");
         msg.textContent = "Added ✅";
         document.getElementById("rec_name").value = "";
         document.getElementById("rec_mobile").value = "";
         await loadRecruiters();
-
-      } catch (e) {
-        console.error(e);
-        msg.textContent = "Error: API failed to load";
-      } finally {
+        setTimeout(()=>msg.textContent="", 1200);
+      }catch(e){
+        msg.textContent = "Error: " + e.message;
+      }finally{
         btn.disabled = false;
       }
     }
 
     document.getElementById("addRecBtn").addEventListener("click", addRecruiter);
-    loadRecruiters();
+
+    (async function init(){
+      try{ await loadRecruiters(); }catch(e){ msg.textContent = "Error: " + e.message; }
+    })();
   </script>
 </body>
 </html>
