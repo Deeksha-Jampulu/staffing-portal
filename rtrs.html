@@ -8,18 +8,19 @@
 </head>
 <body>
 
-<nav>
-  <div class="brand">
-    <img src="logo.png" alt="Simarn Logo" />
-    <span>Simarn Staffing Portal</span>
-  </div>
+  <nav class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="Simarn Logo" />
+      <span>Simarn Staffing Portal</span>
+    </div>
 
-  <a href="index.html">Dashboard</a>
-  <a href="candidates.html">Candidates</a>
-  <a class="active" href="rtrs.html">RTRs</a>
-  <a href="recruiters.html">Recruiters</a>
-</nav>
-
+    <div class="nav-links">
+      <a href="index.html">Dashboard</a>
+      <a href="candidates.html">Candidates</a>
+      <a class="active" href="rtrs.html">RTRs</a>
+      <a href="recruiters.html">Recruiters</a>
+    </div>
+  </nav>
 
   <div class="container">
     <div class="card">
@@ -68,7 +69,12 @@
     const err = document.getElementById("err");
     const rows = document.getElementById("rtrRows");
 
-    function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
 
     async function loadCandidates(){
       const r = await apiGet("candidates");
@@ -124,10 +130,7 @@
 
     (async function init(){
       try{
-        // default today
-        const d = new Date();
-        document.getElementById("rtr_date").value = d.toISOString().slice(0,10);
-
+        document.getElementById("rtr_date").value = new Date().toISOString().slice(0,10);
         await loadCandidates();
         await loadRTRs();
       }catch(e){
