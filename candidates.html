@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Simarn Staffing Portal - Candidates</title>
-  <link rel="stylesheet" href="style.css?v=999" />
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
 
   <nav class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="Simarn Logo" />
+      <img src="logo.png" alt="Logo" />
       <span>Simarn Staffing Portal</span>
     </div>
     <div class="nav-links">
@@ -22,8 +22,6 @@
   </nav>
 
   <div class="container">
-
-    <!-- ADD CANDIDATE -->
     <div class="card">
       <h1>Candidates</h1>
       <p class="small">Add candidate and store resume as Google Drive link.</p>
@@ -44,7 +42,6 @@
       </div>
     </div>
 
-    <!-- LIST -->
     <div class="card">
       <h2 style="margin:0 0 10px;">Candidate List</h2>
       <input id="search" placeholder="Search by name/email/role..." style="width:100%;margin-bottom:10px;" />
@@ -53,24 +50,23 @@
         <table>
           <thead>
             <tr>
-              <th style="min-width:180px;">Name</th>
-              <th style="min-width:160px;">Domain/Role</th>
-              <th style="min-width:120px;">Location</th>
-              <th style="min-width:220px;">Email</th>
-              <th style="min-width:150px;">Phone</th>
-              <th style="min-width:90px;">Resume</th>
-              <th style="min-width:340px;">Notes</th>
-              <th style="min-width:110px;">Created</th>
-              <th style="min-width:110px;">Actions</th>
+              <th>Name</th>
+              <th>Domain/Role</th>
+              <th>Location</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Resume</th>
+              <th>Notes</th>
+              <th>Created</th>
+              <th class="actions">Action</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
 
-      <p class="small" id="err" style="margin-top:10px;"></p>
+      <p class="small" id="err"></p>
     </div>
-
   </div>
 
   <script src="app.js"></script>
@@ -82,65 +78,50 @@
 
     function esc(s){
       return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }
 
-    // ✅ Fix wrapping for email + notes using inline styles (works even if CSS is weird)
+    function normPhone(s){
+      // keep digits + plus + spaces + hyphen + parentheses
+      return String(s ?? "").replace(/[^\d+\s\-()]/g, "").trim();
+    }
+
+    async function deleteCandidate(id){
+      if(!confirm("Delete this candidate?")) return;
+      const r = await apiPost("deleteCandidate", { candidate_id: id });
+      if(!r || r.ok === false) throw new Error(r?.error || "Delete failed");
+      await load();
+    }
+
     function render(list){
       tbody.innerHTML = "";
-
       list.forEach(c => {
         const resume = c.resume_link ? `<a href="${esc(c.resume_link)}" target="_blank">View</a>` : "-";
-        const email = c.email
-          ? `<a href="mailto:${esc(c.email)}" style="display:inline-block;max-width:220px;white-space:normal;overflow-wrap:anywhere;word-break:normal;">${esc(c.email)}</a>`
-          : "-";
-
+        const email = c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "-";
         const created = c.created_at ? new Date(c.created_at).toLocaleDateString() : "";
-        const cid = c.candidate_id || "";
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td style="white-space:nowrap;">${esc(c.name)}</td>
-          <td style="white-space:nowrap;">${esc(c.domain_role)}</td>
-          <td style="white-space:nowrap;">${esc(c.location)}</td>
-
-          <td>${email}</td>
-
-          <td style="white-space:nowrap;">${esc(c.phone)}</td>
-          <td style="white-space:nowrap;">${resume}</td>
-
-          <td style="max-width:340px;white-space:normal;overflow-wrap:break-word;word-break:normal;">
-            ${esc(c.notes)}
-          </td>
-
-          <td style="white-space:nowrap;" class="small">${esc(created)}</td>
-
-          <td style="white-space:nowrap;">
-            <button class="danger btnDel" data-id="${esc(cid)}">Delete</button>
+          <td class="nowrap">${esc(c.name)}</td>
+          <td class="nowrap">${esc(c.domain_role)}</td>
+          <td class="nowrap">${esc(c.location)}</td>
+          <td class="emailcell">${email}</td>
+          <td class="nowrap">${esc(c.phone)}</td>
+          <td class="nowrap">${resume}</td>
+          <td class="notes">${esc(c.notes)}</td>
+          <td class="nowrap small">${esc(created)}</td>
+          <td class="actions">
+            <button class="danger" data-id="${esc(c.candidate_id)}">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
 
-      // attach delete clicks
-      document.querySelectorAll(".btnDel").forEach(btn => {
+      // hook delete buttons
+      tbody.querySelectorAll("button.danger").forEach(btn => {
         btn.addEventListener("click", async () => {
-          const id = btn.dataset.id;
-          if(!id){
-            alert("Missing candidate_id. Delete needs candidate_id from sheet.");
-            return;
-          }
-          if(!confirm("Delete this candidate?")) return;
-
-          try{
-            const r = await apiPost("deleteCandidate", { candidate_id: id });
-            if(!r || r.ok === false) throw new Error(r?.error || "Delete failed");
-            await load();
-          }catch(e){
-            alert("Error: " + e.message);
-          }
+          try{ await deleteCandidate(btn.dataset.id); }
+          catch(e){ errEl.textContent = "Error: " + e.message; }
         });
       });
     }
@@ -154,7 +135,6 @@
         render(all);
       }catch(e){
         errEl.textContent = "Error: " + e.message;
-        console.error(e);
       }
     }
 
@@ -171,13 +151,11 @@
     document.getElementById("btnAdd").addEventListener("click", async () => {
       statusEl.textContent = "Saving...";
       errEl.textContent = "";
-
       try{
-        // ✅ phone accepts anything; we store exactly what user typed (spaces/+ are okay)
         const payload = {
           name: document.getElementById("name").value.trim(),
           email: document.getElementById("email").value.trim(),
-          phone: document.getElementById("phone").value.trim(),
+          phone: normPhone(document.getElementById("phone").value),
           location: document.getElementById("location").value.trim(),
           domain_role: document.getElementById("domain_role").value.trim(),
           resume_link: document.getElementById("resume_link").value.trim(),
@@ -189,16 +167,13 @@
         const r = await apiPost("addCandidate", payload);
         if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
 
-        ["name","email","phone","location","domain_role","resume_link","notes"]
-          .forEach(id => document.getElementById(id).value = "");
-
+        ["name","email","phone","location","domain_role","resume_link","notes"].forEach(id => document.getElementById(id).value = "");
         statusEl.textContent = "Saved ✅";
         await load();
         setTimeout(()=>statusEl.textContent="", 1200);
       }catch(e){
         statusEl.textContent = "";
         errEl.textContent = "Error: " + e.message;
-        console.error(e);
       }
     });
 
