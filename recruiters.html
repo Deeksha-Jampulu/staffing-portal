@@ -4,13 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Simarn Staffing Portal - Recruiters</title>
-  <link rel="stylesheet" href="style.css?v=2001" />
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
 
   <nav class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="Simarn Logo" />
+      <img src="logo.png" alt="Logo" />
       <span>Simarn Staffing Portal</span>
     </div>
     <div class="nav-links">
@@ -28,7 +28,7 @@
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input id="rec_name" placeholder="Recruiter Name *" />
-        <input id="rec_mobile" placeholder="Mobile Number * (any format ok)" />
+        <input id="rec_mobile" placeholder="Mobile Number * (ex: +1 469 123 4567)" />
       </div>
 
       <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
@@ -39,70 +39,67 @@
 
     <div class="card">
       <h2>Recruiters List</h2>
-      <div style="overflow:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th align="left">Name</th>
-              <th align="left">Mobile</th>
-              <th align="left">Action</th>
-            </tr>
-          </thead>
-          <tbody id="recRows"></tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Mobile</th>
+            <th class="actions">Action</th>
+          </tr>
+        </thead>
+        <tbody id="recRows"></tbody>
+      </table>
+      <p class="small" id="err"></p>
     </div>
   </div>
 
   <script src="app.js"></script>
   <script>
     const msg = document.getElementById("msg");
+    const err = document.getElementById("err");
     const tbody = document.getElementById("recRows");
 
     function esc(s){
       return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    function normPhone(s){
+      return String(s ?? "").replace(/[^\d+\s\-()]/g, "").trim();
+    }
+
+    async function deleteRecruiter(id){
+      if(!confirm("Delete this recruiter?")) return;
+      const r = await apiPost("deleteRecruiter", { recruiter_id: id });
+      if(!r || r.ok === false) throw new Error(r?.error || "Delete failed");
+      await loadRecruiters();
     }
 
     async function loadRecruiters(){
-      msg.textContent = "";
+      err.textContent = "";
       const r = await apiGet("recruiters");
       if(!r || r.ok === false) throw new Error(r?.error || "Recruiters API failed");
 
       tbody.innerHTML = "";
       (r.data || []).forEach(rec => {
         const mobile = String(rec.mobile || "").trim();
-        const mobileLink = mobile ? `<a href="tel:${esc(mobile)}">${esc(mobile)}</a>` : "-";
+        const mobileLink = mobile ? `<a href="tel:${esc(mobile)}">${esc(mobile)}</a>` : "";
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${esc(rec.name)}</td>
-          <td class="nowrap">${mobileLink}</td>
-          <td><button class="danger" data-id="${esc(rec.recruiter_id)}">Delete</button></td>
+          <td>${mobileLink}</td>
+          <td class="actions">
+            <button class="danger" data-id="${esc(rec.recruiter_id)}">Delete</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
 
-      // bind delete buttons
-      tbody.querySelectorAll("button[data-id]").forEach(btn => {
+      tbody.querySelectorAll("button.danger").forEach(btn => {
         btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-id");
-          if(!id) return;
-
-          const ok = confirm("Delete this recruiter?");
-          if(!ok) return;
-
-          btn.disabled = true;
-          try{
-            const resp = await apiPost("deleteRecruiter", { id });
-            if(!resp || resp.ok === false) throw new Error(resp?.error || "Delete failed");
-            await loadRecruiters();
-          }catch(e){
-            msg.textContent = "Error: " + e.message;
-            btn.disabled = false;
-          }
+          try{ await deleteRecruiter(btn.dataset.id); }
+          catch(e){ err.textContent = "Error: " + e.message; }
         });
       });
     }
@@ -110,7 +107,7 @@
     async function addRecruiter(){
       const btn = document.getElementById("addRecBtn");
       const name = document.getElementById("rec_name").value.trim();
-      const mobile = document.getElementById("rec_mobile").value.trim();
+      const mobile = normPhone(document.getElementById("rec_mobile").value);
 
       if(!name || !mobile){
         msg.textContent = "Name and Mobile are required";
@@ -123,11 +120,9 @@
       try{
         const r = await apiPost("addRecruiter", { name, mobile });
         if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
-
         msg.textContent = "Added ✅";
         document.getElementById("rec_name").value = "";
         document.getElementById("rec_mobile").value = "";
-
         await loadRecruiters();
         setTimeout(()=>msg.textContent="", 1200);
       }catch(e){
@@ -140,11 +135,8 @@
     document.getElementById("addRecBtn").addEventListener("click", addRecruiter);
 
     (async function init(){
-      try{
-        await loadRecruiters();
-      }catch(e){
-        msg.textContent = "Error: " + e.message;
-      }
+      try{ await loadRecruiters(); }
+      catch(e){ err.textContent = "Error: " + e.message; }
     })();
   </script>
 </body>
