@@ -116,18 +116,16 @@
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="nowrap">${esc(c.name)}</td>
-          <td class="nowrap">${esc(c.domain_role)}</td>
-          <td class="nowrap">${esc(c.location)}</td>
-          <td class="emailcell">${email}</td>
-          <td class="nowrap">${esc(c.phone)}</td>
-          <td class="nowrap">${resume}</td>
-          <td class="notes">${esc(c.notes)}</td>
-          <td class="nowrap small">${esc(created)}</td>
-          <td class="nowrap">
-            <button class="danger" data-id="${esc(c.candidate_id)}">Delete</button>
-          </td>
-        `;
+          <td class="cell-name">${esc(c.name)}</td>
+          <td class="cell-role">${esc(c.domain_role)}</td>
+          <td class="cell-location">${esc(c.location)}</td>
+          <td class="cell-email">${email}</td>
+          <td class="cell-phone">${esc(c.phone)}</td>
+          <td class="cell-resume">${resume}</td>
+          <td class="cell-notes">${esc(c.notes)}</td>
+          <td class="cell-created small">${esc(created)}</td>
+          <td class="cell-actions"></td>
+`;
         tbody.appendChild(tr);
       });
     }
