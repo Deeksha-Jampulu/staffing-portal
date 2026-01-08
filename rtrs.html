@@ -4,16 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Simarn Staffing Portal - RTRs</title>
-  <link rel="stylesheet" href="style.css?v=2001" />
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
 
   <nav class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="Simarn Logo" />
+      <img src="logo.png" alt="Logo" />
       <span>Simarn Staffing Portal</span>
     </div>
-
     <div class="nav-links">
       <a href="index.html">Dashboard</a>
       <a href="candidates.html">Candidates</a>
@@ -31,9 +30,7 @@
         <div>
           <label class="small">Candidate</label>
           <select id="candidateSelect"></select>
-          <p class="small">Select a candidate and click Add RTR.</p>
         </div>
-
         <div>
           <label class="small">RTR Date</label>
           <input id="rtr_date" type="date" />
@@ -48,19 +45,17 @@
 
     <div class="card">
       <h2>Recent RTRs</h2>
-      <div style="overflow:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th align="left">Candidate</th>
-              <th align="left">Domain/Role</th>
-              <th align="left">RTR Date</th>
-              <th align="left">Action</th>
-            </tr>
-          </thead>
-          <tbody id="rtrRows"></tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Domain/Role</th>
+            <th>RTR Date</th>
+            <th class="actions">Action</th>
+          </tr>
+        </thead>
+        <tbody id="rtrRows"></tbody>
+      </table>
       <p class="small" id="err"></p>
     </div>
   </div>
@@ -74,15 +69,19 @@
 
     function esc(s){
       return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;");
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    async function deleteRTR(id){
+      if(!confirm("Delete this RTR record?")) return;
+      const r = await apiPost("deleteRTR", { rtr_id: id });
+      if(!r || r.ok === false) throw new Error(r?.error || "Delete failed");
+      await loadRTRs();
     }
 
     async function loadCandidates(){
       const r = await apiGet("candidates");
-      if(!r || r.ok === false) throw new Error(r?.error || "Candidates API failed");
-
+      if(!r || r.ok === false) throw new Error("Candidates API failed");
       sel.innerHTML = "";
       (r.data || []).forEach(c => {
         const opt = document.createElement("option");
@@ -97,43 +96,26 @@
     async function loadRTRs(){
       err.textContent = "";
       const r = await apiGet("rtrs");
-      if(!r || r.ok === false) throw new Error(r?.error || "RTRs API failed");
-
+      if(!r || r.ok === false) throw new Error("RTRs API failed");
       rows.innerHTML = "";
 
-      const list = (r.data || []).slice().reverse().slice(0, 25);
-
-      list.forEach(x => {
+      (r.data || []).slice().reverse().slice(0,20).forEach(x => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${esc(x.candidate_name)}</td>
           <td>${esc(x.domain_role)}</td>
           <td>${esc(x.rtr_date)}</td>
-          <td>
+          <td class="actions">
             <button class="danger" data-id="${esc(x.rtr_id)}">Delete</button>
           </td>
         `;
         rows.appendChild(tr);
       });
 
-      // bind delete buttons (safe)
-      rows.querySelectorAll("button[data-id]").forEach(btn => {
+      rows.querySelectorAll("button.danger").forEach(btn => {
         btn.addEventListener("click", async () => {
-          const id = btn.getAttribute("data-id");
-          if(!id) return;
-
-          const ok = confirm("Delete this RTR?");
-          if(!ok) return;
-
-          btn.disabled = true;
-          try{
-            const resp = await apiPost("deleteRTR", { id });
-            if(!resp || resp.ok === false) throw new Error(resp?.error || "Delete failed");
-            await loadRTRs();
-          }catch(e){
-            err.textContent = "Error: " + e.message;
-            btn.disabled = false;
-          }
+          try{ await deleteRTR(btn.dataset.id); }
+          catch(e){ err.textContent = "Error: " + e.message; }
         });
       });
     }
@@ -149,10 +131,8 @@
           domain_role: selected?.dataset?.role || "",
           rtr_date: document.getElementById("rtr_date").value
         };
-
         const r = await apiPost("addRTR", payload);
         if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
-
         msg.textContent = "Saved ✅";
         await loadRTRs();
         setTimeout(()=>msg.textContent="", 1200);
@@ -163,8 +143,8 @@
     });
 
     (async function init(){
+      document.getElementById("rtr_date").value = new Date().toISOString().slice(0,10);
       try{
-        document.getElementById("rtr_date").value = new Date().toISOString().slice(0,10);
         await loadCandidates();
         await loadRTRs();
       }catch(e){
