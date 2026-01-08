@@ -29,7 +29,7 @@ a { text-decoration: none; }
 }
 
 .topbar .nav-links{
-  margin-left:auto;           /* pushes links to the right */
+  margin-left:auto;
   display:flex;
   align-items:center;
   gap:14px;
@@ -86,6 +86,14 @@ button{
 }
 button:disabled{ opacity:.6; cursor:not-allowed; }
 
+/* ✅ Delete button style */
+button.danger{
+  background:#b91c1c;
+}
+button.danger:hover{
+  opacity:.9;
+}
+
 /* =============== TABLES =============== */
 table{ width:100%; border-collapse:collapse; }
 th, td{ padding:10px; vertical-align:top; border-bottom:1px solid #eef2f7; }
@@ -140,6 +148,6 @@ th{ text-align:left; }
 .hero .hero-img img{
   width:100%;
   height:100%;
-  object-fit:cover;     /* makes image fill nicely */
+  object-fit:cover;
   display:block;
 }
