@@ -28,7 +28,7 @@
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input id="rec_name" placeholder="Recruiter Name *" />
-        <input id="rec_mobile" placeholder="Mobile Number * (ex: 4691234567)" />
+        <input id="rec_mobile" placeholder="Mobile Number * (any format ok)" />
       </div>
 
       <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
@@ -39,15 +39,18 @@
 
     <div class="card">
       <h2>Recruiters List</h2>
-      <table>
-        <thead>
-          <tr>
-            <th align="left">Name</th>
-            <th align="left">Mobile</th>
-          </tr>
-        </thead>
-        <tbody id="recRows"></tbody>
-      </table>
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th align="left">Name</th>
+              <th align="left">Mobile</th>
+              <th align="left">Action</th>
+            </tr>
+          </thead>
+          <tbody id="recRows"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -66,15 +69,41 @@
     async function loadRecruiters(){
       msg.textContent = "";
       const r = await apiGet("recruiters");
-      if(!r || r.ok === false) throw new Error("Recruiters API failed");
+      if(!r || r.ok === false) throw new Error(r?.error || "Recruiters API failed");
 
       tbody.innerHTML = "";
       (r.data || []).forEach(rec => {
         const mobile = String(rec.mobile || "").trim();
-        const mobileLink = mobile ? `<a href="tel:${esc(mobile)}">${esc(mobile)}</a>` : "";
+        const mobileLink = mobile ? `<a href="tel:${esc(mobile)}">${esc(mobile)}</a>` : "-";
+
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${esc(rec.name)}</td><td>${mobileLink}</td>`;
+        tr.innerHTML = `
+          <td>${esc(rec.name)}</td>
+          <td class="nowrap">${mobileLink}</td>
+          <td><button class="danger" data-id="${esc(rec.recruiter_id)}">Delete</button></td>
+        `;
         tbody.appendChild(tr);
+      });
+
+      // bind delete buttons
+      tbody.querySelectorAll("button[data-id]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          if(!id) return;
+
+          const ok = confirm("Delete this recruiter?");
+          if(!ok) return;
+
+          btn.disabled = true;
+          try{
+            const resp = await apiPost("deleteRecruiter", { id });
+            if(!resp || resp.ok === false) throw new Error(resp?.error || "Delete failed");
+            await loadRecruiters();
+          }catch(e){
+            msg.textContent = "Error: " + e.message;
+            btn.disabled = false;
+          }
+        });
       });
     }
 
@@ -93,10 +122,12 @@
 
       try{
         const r = await apiPost("addRecruiter", { name, mobile });
-        if(!r || r.ok === false) throw new Error("Save failed");
+        if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
+
         msg.textContent = "Added ✅";
         document.getElementById("rec_name").value = "";
         document.getElementById("rec_mobile").value = "";
+
         await loadRecruiters();
         setTimeout(()=>msg.textContent="", 1200);
       }catch(e){
@@ -109,7 +140,11 @@
     document.getElementById("addRecBtn").addEventListener("click", addRecruiter);
 
     (async function init(){
-      try{ await loadRecruiters(); }catch(e){ msg.textContent = "Error: " + e.message; }
+      try{
+        await loadRecruiters();
+      }catch(e){
+        msg.textContent = "Error: " + e.message;
+      }
     })();
   </script>
 </body>
