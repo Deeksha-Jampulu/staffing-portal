@@ -48,16 +48,19 @@
 
     <div class="card">
       <h2>Recent RTRs</h2>
-      <table>
-        <thead>
-          <tr>
-            <th align="left">Candidate</th>
-            <th align="left">Domain/Role</th>
-            <th align="left">RTR Date</th>
-          </tr>
-        </thead>
-        <tbody id="rtrRows"></tbody>
-      </table>
+      <div style="overflow:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th align="left">Candidate</th>
+              <th align="left">Domain/Role</th>
+              <th align="left">RTR Date</th>
+              <th align="left">Action</th>
+            </tr>
+          </thead>
+          <tbody id="rtrRows"></tbody>
+        </table>
+      </div>
       <p class="small" id="err"></p>
     </div>
   </div>
@@ -78,7 +81,8 @@
 
     async function loadCandidates(){
       const r = await apiGet("candidates");
-      if(!r || r.ok === false) throw new Error("Candidates API failed");
+      if(!r || r.ok === false) throw new Error(r?.error || "Candidates API failed");
+
       sel.innerHTML = "";
       (r.data || []).forEach(c => {
         const opt = document.createElement("option");
@@ -93,16 +97,44 @@
     async function loadRTRs(){
       err.textContent = "";
       const r = await apiGet("rtrs");
-      if(!r || r.ok === false) throw new Error("RTRs API failed");
+      if(!r || r.ok === false) throw new Error(r?.error || "RTRs API failed");
+
       rows.innerHTML = "";
-      (r.data || []).slice().reverse().slice(0,10).forEach(x => {
+
+      const list = (r.data || []).slice().reverse().slice(0, 25);
+
+      list.forEach(x => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${esc(x.candidate_name)}</td>
           <td>${esc(x.domain_role)}</td>
           <td>${esc(x.rtr_date)}</td>
+          <td>
+            <button class="danger" data-id="${esc(x.rtr_id)}">Delete</button>
+          </td>
         `;
         rows.appendChild(tr);
+      });
+
+      // bind delete buttons (safe)
+      rows.querySelectorAll("button[data-id]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          if(!id) return;
+
+          const ok = confirm("Delete this RTR?");
+          if(!ok) return;
+
+          btn.disabled = true;
+          try{
+            const resp = await apiPost("deleteRTR", { id });
+            if(!resp || resp.ok === false) throw new Error(resp?.error || "Delete failed");
+            await loadRTRs();
+          }catch(e){
+            err.textContent = "Error: " + e.message;
+            btn.disabled = false;
+          }
+        });
       });
     }
 
@@ -117,8 +149,10 @@
           domain_role: selected?.dataset?.role || "",
           rtr_date: document.getElementById("rtr_date").value
         };
+
         const r = await apiPost("addRTR", payload);
         if(!r || r.ok === false) throw new Error(r?.error || "Save failed");
+
         msg.textContent = "Saved ✅";
         await loadRTRs();
         setTimeout(()=>msg.textContent="", 1200);
