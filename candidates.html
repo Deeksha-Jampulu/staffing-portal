@@ -29,7 +29,15 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <input id="name" placeholder="Name *" />
         <input id="email" placeholder="Email" />
-        <input id="phone" placeholder="Phone (ex: +14691234567)" />
+
+        <!-- ✅ Phone accepts any format -->
+        <input
+          id="phone"
+          type="text"
+          inputmode="tel"
+          placeholder="Phone (any format: 2345678902, +1 345 678 8976)"
+        />
+
         <input id="location" placeholder="Location" />
         <input id="domain_role" placeholder="Domain / Role (QA, Oracle, Java)" style="grid-column:1 / span 2;" />
         <input id="resume_link" placeholder="Resume Link (Google Drive)" style="grid-column:1 / span 2;" />
@@ -50,8 +58,15 @@
         <table>
           <thead>
             <tr>
-              <th>Name</th><th>Domain/Role</th><th>Location</th><th>Email</th>
-              <th>Phone</th><th>Resume</th><th>Notes</th><th>Created</th>
+              <th>Name</th>
+              <th>Domain/Role</th>
+              <th>Location</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Resume</th>
+              <th>Notes</th>
+              <th>Created</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -69,7 +84,28 @@
     const tbody = document.getElementById("tbody");
     let all = [];
 
-    function esc(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;");
+    }
+
+    // ✅ Accept any input, store clean
+    function normalizePhone(raw){
+      const original = String(raw || "").trim();
+      const hasPlus = original.startsWith("+");
+
+      let digits = original.replace(/[^\d]/g, ""); // keep digits only
+      if (!digits) return "";
+
+      // US defaults
+      if (digits.length === 10) return "+1" + digits;
+      if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
+
+      // other countries
+      return (hasPlus ? "+" : "") + digits;
+    }
 
     function render(list){
       tbody.innerHTML = "";
@@ -88,6 +124,9 @@
           <td class="nowrap">${resume}</td>
           <td class="notes">${esc(c.notes)}</td>
           <td class="nowrap small">${esc(created)}</td>
+          <td class="nowrap">
+            <button class="danger" data-id="${esc(c.candidate_id)}">Delete</button>
+          </td>
         `;
         tbody.appendChild(tr);
       });
@@ -106,6 +145,7 @@
       }
     }
 
+    // ✅ Search
     document.getElementById("search").addEventListener("input", (e) => {
       const q = e.target.value.toLowerCase().trim();
       const filtered = all.filter(c =>
@@ -116,6 +156,7 @@
       render(filtered);
     });
 
+    // ✅ Add Candidate
     document.getElementById("btnAdd").addEventListener("click", async () => {
       statusEl.textContent = "Saving...";
       errEl.textContent = "";
@@ -123,7 +164,7 @@
         const payload = {
           name: document.getElementById("name").value.trim(),
           email: document.getElementById("email").value.trim(),
-          phone: document.getElementById("phone").value.trim(),
+          phone: normalizePhone(document.getElementById("phone").value),
           location: document.getElementById("location").value.trim(),
           domain_role: document.getElementById("domain_role").value.trim(),
           resume_link: document.getElementById("resume_link").value.trim(),
@@ -143,6 +184,25 @@
         statusEl.textContent = "";
         errEl.textContent = "Error: " + e.message;
         console.error(e);
+      }
+    });
+
+    // ✅ Delete Candidate
+    tbody.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button.danger");
+      if(!btn) return;
+
+      const id = btn.getAttribute("data-id");
+      if(!id) return;
+
+      if(!confirm("Delete this candidate?")) return;
+
+      try{
+        const r = await apiPost("deleteCandidate", { id });
+        if(!r || r.ok === false) throw new Error(r?.error || "Delete failed");
+        await load();
+      }catch(err){
+        alert("Error: " + err.message);
       }
     });
 
