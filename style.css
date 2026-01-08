@@ -95,14 +95,46 @@ button.danger:hover{
 }
 
 /* =============== TABLES =============== */
-table{ width:100%; border-collapse:collapse; }
-th, td{ padding:10px; vertical-align:top; border-bottom:1px solid #eef2f7; }
+/* IMPORTANT: fixed layout prevents super-narrow columns */
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout: fixed;
+}
+
+th, td{
+  padding:10px;
+  vertical-align:top;
+  border-bottom:1px solid #eef2f7;
+  overflow-wrap:anywhere;     /* wraps long text safely */
+  word-break: normal;         /* prevents letter-by-letter breaking */
+}
+
 th{ text-align:left; }
 
 /* Prevent overlap + allow nice wrapping */
 .nowrap{ white-space:nowrap; }
-.emailcell a{ word-break:break-all; }
-.notes{ max-width:320px; white-space:normal; word-break:break-word; }
+
+/* Email: wrap nicely (NOT break-all) */
+.emailcell{
+  width: 220px;               /* adjust if you want wider */
+}
+.emailcell a{
+  display:inline-block;
+  max-width: 220px;
+  white-space: normal;
+  overflow-wrap:anywhere;
+  word-break: normal;
+}
+
+/* Notes: give good width + wrap */
+.notes{
+  width: 380px;               /* adjust if you want bigger */
+  max-width: 380px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
 
 /* =============== DASHBOARD =============== */
 .kpi-grid{
