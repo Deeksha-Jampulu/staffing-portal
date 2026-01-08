@@ -86,87 +86,58 @@ button{
 }
 button:disabled{ opacity:.6; cursor:not-allowed; }
 
-/* Delete button */
 button.danger{
   background:#b91c1c;
 }
-button.danger:hover{
-  opacity:.9;
-}
+button.danger:hover{ opacity:.9; }
 
-/* =============== TABLES (FIXED PROPERLY) =============== */
+/* =============== TABLES =============== */
 table{
   width:100%;
   border-collapse:collapse;
-  table-layout:auto;   /* IMPORTANT: lets notes take space */
+  table-layout: fixed;          /* ✅ prevents overlaps */
 }
 
 th, td{
   padding:10px;
   vertical-align:top;
   border-bottom:1px solid #eef2f7;
+  overflow-wrap:anywhere;       /* ✅ wraps long stuff */
+  word-break: normal;
 }
-
 th{ text-align:left; }
 
-/* Make short columns neat (ellipsis instead of overlap) */
-.cell-name,
-.cell-role,
-.cell-location,
-.cell-phone,
-.cell-created{
-  max-width: 170px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.nowrap{ white-space:nowrap; }
 
-/* Email column wraps nicely */
-.cell-email a{
+/* Email wraps nicely */
+.emailcell a{
   display:inline-block;
-  max-width: 240px;
+  max-width: 220px;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap:anywhere;
   word-break: normal;
 }
 
-/* Resume column */
-.cell-resume{
-  width: 70px;
-  white-space: nowrap;
-}
-
-/* Notes column wraps like a paragraph */
-.cell-notes{
-  min-width: 320px;
-  max-width: 520px;
-  white-space: normal;
-  overflow-wrap: break-word;
-  word-break: normal;
-  line-height: 1.35;
+/* Notes wraps nicely */
+.notes{
+  max-width:380px;
+  white-space:normal;
+  overflow-wrap:anywhere;
 }
 
 /* Actions column */
-.cell-actions{
-  width: 110px;
-  white-space: nowrap;
+.actions{
+  width:110px;
 }
-
-/* If you still have old classes anywhere */
-.nowrap{ white-space:nowrap; }
-.emailcell a{ overflow-wrap:anywhere; }
-.notes{ overflow-wrap:break-word; }
 
 /* =============== DASHBOARD =============== */
 .kpi-grid{
   display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
+  grid-template-columns:repeat(2, minmax(0, 1fr));
   gap:14px;
   margin-bottom:14px;
 }
-@media (max-width: 900px){
-  .kpi-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
-}
+
 .grid-2{
   display:grid;
   grid-template-columns:repeat(2, minmax(0, 1fr));
@@ -188,15 +159,11 @@ th{ text-align:left; }
 }
 .hero .hero-text{ flex:1; }
 .hero .hero-img{
-  width:260px;
-  height:170px;
+  width:320px;
+  height:220px;
   border-radius:16px;
-  background:#fff;
   overflow:hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,.06);
-  display:flex;
-  align-items:center;
-  justify-content:center;
 }
 .hero .hero-img img{
   width:100%;
