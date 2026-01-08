@@ -86,7 +86,7 @@ button{
 }
 button:disabled{ opacity:.6; cursor:not-allowed; }
 
-/* ✅ Delete button style */
+/* Delete button */
 button.danger{
   background:#b91c1c;
 }
@@ -94,47 +94,68 @@ button.danger:hover{
   opacity:.9;
 }
 
-/* =============== TABLES =============== */
-/* IMPORTANT: fixed layout prevents super-narrow columns */
+/* =============== TABLES (FIXED PROPERLY) =============== */
 table{
   width:100%;
   border-collapse:collapse;
-  table-layout: fixed;
+  table-layout:auto;   /* IMPORTANT: lets notes take space */
 }
 
 th, td{
   padding:10px;
   vertical-align:top;
   border-bottom:1px solid #eef2f7;
-  overflow-wrap:anywhere;     /* wraps long text safely */
-  word-break: normal;         /* prevents letter-by-letter breaking */
 }
 
 th{ text-align:left; }
 
-/* Prevent overlap + allow nice wrapping */
-.nowrap{ white-space:nowrap; }
-
-/* Email: wrap nicely (NOT break-all) */
-.emailcell{
-  width: 220px;               /* adjust if you want wider */
+/* Make short columns neat (ellipsis instead of overlap) */
+.cell-name,
+.cell-role,
+.cell-location,
+.cell-phone,
+.cell-created{
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.emailcell a{
+
+/* Email column wraps nicely */
+.cell-email a{
   display:inline-block;
-  max-width: 220px;
+  max-width: 240px;
   white-space: normal;
-  overflow-wrap:anywhere;
+  overflow-wrap: anywhere;
   word-break: normal;
 }
 
-/* Notes: give good width + wrap */
-.notes{
-  width: 380px;               /* adjust if you want bigger */
-  max-width: 380px;
+/* Resume column */
+.cell-resume{
+  width: 70px;
+  white-space: nowrap;
+}
+
+/* Notes column wraps like a paragraph */
+.cell-notes{
+  min-width: 320px;
+  max-width: 520px;
   white-space: normal;
   overflow-wrap: break-word;
   word-break: normal;
+  line-height: 1.35;
 }
+
+/* Actions column */
+.cell-actions{
+  width: 110px;
+  white-space: nowrap;
+}
+
+/* If you still have old classes anywhere */
+.nowrap{ white-space:nowrap; }
+.emailcell a{ overflow-wrap:anywhere; }
+.notes{ overflow-wrap:break-word; }
 
 /* =============== DASHBOARD =============== */
 .kpi-grid{
